@@ -1,0 +1,77 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: var(--bg-default);
+  --color-foreground: var(--text-primary);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-light: var(--primary-light);
+  --color-surface: var(--surface);
+  --color-surface-elevated: var(--surface-elevated);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-border-default: var(--border-default);
+  --color-success: var(--success);
+  --color-error: var(--error);
+  --color-warning: var(--warning);
+}
+
+@layer base {
+  :root, [data-theme="light"] {
+    --bg-default: #FFFFFF;
+    --surface: #F7F7F8;
+    --surface-elevated: #EFEFEF;
+    --primary: #FF6B00;
+    --primary-hover: #E55E00;
+    --primary-light: #FFF0E6;
+    --primary-border: rgba(255, 107, 0, 0.25);
+    --text-primary: #0F0F0F;
+    --text-secondary: #555566;
+    --text-muted: #999999;
+    --border-default: #E5E5EA;
+    --success: #00C27C;
+    --error: #E5324B;
+    --warning: #F59E0B;
+  }
+
+  [data-theme="dark"] {
+    --bg-default: #0A0A12;
+    --surface: #13131F;
+    --surface-elevated: #1C1C2E;
+    --primary: #FF6B00;
+    --primary-hover: #FF8C00;
+    --primary-light: rgba(255, 107, 0, 0.12);
+    --primary-border: rgba(255, 107, 0, 0.25);
+    --text-primary: #FFFFFF;
+    --text-secondary: #A0A0B0;
+    --text-muted: #555555;
+    --border-default: rgba(255, 255, 255, 0.07);
+    --success: #00D68F;
+    --error: #FF4D6A;
+    --warning: #FBBF24;
+  }
+
+  html {
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  body {
+    background-color: var(--bg-default);
+    color: var(--text-primary);
+    font-family: var(--font-dm-sans), sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-syne), sans-serif;
+  }
+}
+
+@layer components {
+  .vault-card {
+    @apply bg-surface border border-border-default rounded-xl transition-all duration-300;
+  }
+
+  [data-theme="dark"] .vault-card {
+    @apply bg-surface/50 backdrop-blur-md;
+  }
+}

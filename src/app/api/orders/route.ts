@@ -1,0 +1,138 @@
+import { NextRequest, NextResponse } from "next/server";
+import prisma from "@/lib/prisma";
+import { getUserFromRequest } from "@/lib/auth";
+
+export async function POST(request: NextRequest) {
+  try {
+    const payload = await getUserFromRequest(request);
+    if (!payload || !payload.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const userId = payload.id as string;
+    const { product_id, quantity } = await request.json();
+
+    if (!product_id || !quantity || quantity <= 0) {
+      return NextResponse.json({ error: "Invalid request parameters" }, { status: 400 });
+    }
+
+    // 1. Get Product
+    const product = await prisma.product.findUnique({
+      where: { id: product_id }
+    });
+
+    if (!product || !product.isActive) {
+      return NextResponse.json({ error: "Product not found or inactive" }, { status: 404 });
+    }
+
+    // 2. Check stock
+    const availableItems = await prisma.productItem.findMany({
+      where: { productId: product_id, isSold: false },
+      take: quantity
+    });
+
+    if (availableItems.length < quantity) {
+      return NextResponse.json({ error: "Insufficient stock available" }, { status: 400 });
+    }
+
+    const totalAmount = Number(product.price) * quantity;
+
+    // 3. Perform Transaction
+    const result = await prisma.$transaction(async (tx) => {
+      // Check balance within transaction
+      const user = await tx.user.findUnique({ where: { id: userId } });
+      if (!user) throw new Error("User not found");
+
+      if (Number(user.walletBalance) < totalAmount) {
+        const shortfall = totalAmount - Number(user.walletBalance);
+        throw new Error(`Insufficient balance. Shortfall: ${shortfall}`);
+      }
+
+      // Deduct balance
+      await tx.user.update({
+        where: { id: userId },
+        data: { walletBalance: { decrement: totalAmount } }
+      });
+
+      // Create Order
+      const order = await tx.order.create({
+        data: {
+          userId,
+          productId: product_id,
+          quantity,
+          unitPrice: product.price,
+          totalAmount,
+          status: "completed"
+        }
+      });
+
+      // Update Product Items and create Order Items
+      const itemIds = availableItems.map(item => item.id);
+      
+      await tx.productItem.updateMany({
+        where: { id: { in: itemIds } },
+        data: {
+          isSold: true,
+          soldToUserId: userId,
+          orderId: order.id,
+          soldAt: new Date()
+        }
+      });
+
+      // Create Order Items
+      const orderItemsData = itemIds.map(itemId => ({
+        orderId: order.id,
+        productItemId: itemId,
+        isRevealed: false
+      }));
+
+      await tx.orderItem.createMany({ data: orderItemsData });
+
+      // Create Wallet Transaction
+      await tx.walletTransaction.create({
+        data: {
+          userId,
+          type: "debit",
+          amount: totalAmount,
+          reference: `ORD-${order.id}`,
+          description: `Purchase: ${product.name} x${quantity}`,
+          status: "successful"
+        }
+      });
+
+      return order;
+    });
+
+    return NextResponse.json(result, { status: 201 });
+  } catch (error: any) {
+    if (error.message.includes("Insufficient balance")) {
+      return NextResponse.json({ error: error.message }, { status: 402 }); // Payment Required
+    }
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+
+export async function GET(request: NextRequest) {
+  try {
+    const payload = await getUserFromRequest(request);
+    if (!payload || !payload.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const userId = payload.id as string;
+
+    const { searchParams } = new URL(request.url);
+    const limit = searchParams.get("limit");
+
+    const orders = await prisma.order.findMany({
+      where: { userId: userId },
+      orderBy: { createdAt: 'desc' },
+      take: limit ? parseInt(limit) : undefined,
+      include: {
+        product: { select: { name: true } }
+      }
+    });
+
+    return NextResponse.json(orders, { status: 200 });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}

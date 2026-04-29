@@ -1,0 +1,168 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id              String              @id @default(uuid()) @db.Uuid
+  username        String              @unique @db.VarChar(30)
+  email           String              @unique @db.VarChar(255)
+  passwordHash    String              @map("password_hash") @db.Text
+  walletBalance   Decimal             @default(0.00) @map("wallet_balance") @db.Decimal(12, 2)
+  isActive        Boolean             @default(true) @map("is_active")
+  createdAt       DateTime            @default(now()) @map("created_at")
+  
+  orders          Order[]
+  transactions    WalletTransaction[]
+  soldItems       ProductItem[]
+  sessions        Session[]
+
+  @@map("users")
+}
+
+model Admin {
+  id              String   @id @default(uuid()) @db.Uuid
+  username        String   @unique @db.VarChar(30)
+  email           String   @unique @db.VarChar(255)
+  passwordHash    String   @map("password_hash") @db.Text
+  createdAt       DateTime @default(now()) @map("created_at")
+  setupCompleted  Boolean  @default(false) @map("setup_completed")
+  sessions        Session[]
+
+  @@map("admins")
+}
+
+model Category {
+  id          String    @id @default(uuid()) @db.Uuid
+  name        String    @db.VarChar(100)
+  icon        String?   @db.VarChar(10)
+  description String?   @db.Text
+  isActive    Boolean   @default(true) @map("is_active")
+  sortOrder   Int       @default(0) @map("sort_order")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  
+  products    Product[]
+
+  @@map("categories")
+}
+
+model Product {
+  id               String   @id @default(uuid()) @db.Uuid
+  categoryId       String   @map("category_id") @db.Uuid
+  name             String   @db.VarChar(150)
+  shortDescription String?  @map("short_description") @db.Text
+  fullDescription  String?  @map("full_description") @db.Text
+  price            Decimal  @db.Decimal(12, 2)
+  isActive         Boolean  @default(true) @map("is_active")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  category         Category      @relation(fields: [categoryId], references: [id])
+  items            ProductItem[]
+  orders           Order[]
+
+  @@map("products")
+}
+
+model ProductItem {
+  id              String      @id @default(uuid()) @db.Uuid
+  productId       String      @map("product_id") @db.Uuid
+  credentialText  String      @map("credential_text") @db.Text
+  isSold          Boolean     @default(false) @map("is_sold")
+  soldToUserId    String?     @map("sold_to_user_id") @db.Uuid
+  orderId         String?     @map("order_id") @db.Uuid
+  soldAt          DateTime?   @map("sold_at")
+  createdAt       DateTime    @default(now()) @map("created_at")
+
+  product         Product     @relation(fields: [productId], references: [id])
+  soldToUser      User?       @relation(fields: [soldToUserId], references: [id])
+  order           Order?      @relation(fields: [orderId], references: [id])
+  orderItems      OrderItem[]
+
+  @@map("product_items")
+}
+
+model Order {
+  id           String      @id @default(uuid()) @db.Uuid
+  userId       String      @map("user_id") @db.Uuid
+  productId    String      @map("product_id") @db.Uuid
+  quantity     Int
+  unitPrice    Decimal     @map("unit_price") @db.Decimal(12, 2)
+  totalAmount  Decimal     @map("total_amount") @db.Decimal(12, 2)
+  status       OrderStatus @default(pending)
+  createdAt    DateTime    @default(now()) @map("created_at")
+
+  user         User          @relation(fields: [userId], references: [id])
+  product      Product       @relation(fields: [productId], references: [id])
+  productItems ProductItem[]
+  orderItems   OrderItem[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id            String      @id @default(uuid()) @db.Uuid
+  orderId       String      @map("order_id") @db.Uuid
+  productItemId String      @map("product_item_id") @db.Uuid
+  isRevealed    Boolean     @default(false) @map("is_revealed")
+
+  order         Order       @relation(fields: [orderId], references: [id])
+  productItem   ProductItem @relation(fields: [productItemId], references: [id])
+
+  @@map("order_items")
+}
+
+model WalletTransaction {
+  id          String            @id @default(uuid()) @db.Uuid
+  userId      String            @map("user_id") @db.Uuid
+  type        TransactionType
+  amount      Decimal           @db.Decimal(12, 2)
+  reference   String            @unique @db.VarChar(255)
+  description String?           @db.Text
+  status      TransactionStatus @default(pending)
+  createdAt   DateTime          @default(now()) @map("created_at")
+
+  user        User              @relation(fields: [userId], references: [id])
+
+  @@map("wallet_transactions")
+}
+
+model SiteSetting {
+  key       String   @id @db.VarChar(100)
+  value     String   @db.Text
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("site_settings")
+}
+
+enum OrderStatus {
+  pending
+  completed
+  failed
+}
+
+enum TransactionType {
+  credit
+  debit
+}
+
+enum TransactionStatus {
+  pending
+  successful
+  failed
+}
+
+model Session {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String?   @map("user_id") @db.Uuid
+  adminId   String?   @map("admin_id") @db.Uuid
+  expiresAt DateTime  @map("expires_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user  User?  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  admin Admin? @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
