@@ -35,7 +35,7 @@ export default function AdminSettings() {
     const res = await fetch("/api/admin/settings", { credentials: 'include' });
     const data = await res.json();
     if (Object.keys(data).length > 0) {
-      setSettings(prev => ({ ...prev, ...data }));
+      setSettings((prev: any) => ({ ...prev, ...data }));
     }
     setLoading(false);
   };
