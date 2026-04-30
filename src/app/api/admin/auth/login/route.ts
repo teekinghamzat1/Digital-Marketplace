@@ -11,7 +11,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Missing fields" }, { status: 400 });
     }
 
-    const admin = await prisma.admin.findUnique({ where: { email } });
+    const normalizedEmail = email.trim().toLowerCase();
+    
+    // Fallback: try querying exact first, then lowercased, just in case they registered with uppercase
+    let admin = await prisma.admin.findUnique({ where: { email: email.trim() } });
+    if (!admin) {
+        admin = await prisma.admin.findUnique({ where: { email: normalizedEmail } });
+    }
 
     if (!admin) {
       return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
