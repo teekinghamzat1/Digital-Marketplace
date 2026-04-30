@@ -3,7 +3,7 @@
 import { useState, useEffect, use } from "react";
 import { Navbar } from "@/components/navbar";
 import Link from "next/link";
-import { CheckCircle2, ArrowLeft, Eye, Copy, Check } from "lucide-react";
+import { CheckCircle2, ArrowLeft, Eye, Copy, Check, AlertCircle } from "lucide-react";
 
 export default function OrderSuccessPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -12,6 +12,10 @@ export default function OrderSuccessPage({ params }: { params: Promise<{ id: str
   const [error, setError] = useState("");
   const [revealing, setRevealing] = useState<Record<string, boolean>>({});
   const [copied, setCopied] = useState<Record<string, boolean>>({});
+  const [showDisputeModal, setShowDisputeModal] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<any>(null);
+  const [disputeReason, setDisputeReason] = useState("");
+  const [submittingDispute, setSubmittingDispute] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -51,6 +55,37 @@ export default function OrderSuccessPage({ params }: { params: Promise<{ id: str
     navigator.clipboard.writeText(text);
     setCopied({ ...copied, [itemId]: true });
     setTimeout(() => setCopied({ ...copied, [itemId]: false }), 2000);
+  };
+
+  const handleReportIssue = (item: any) => {
+    setSelectedItem(item);
+    setShowDisputeModal(true);
+  };
+
+  const submitDispute = async () => {
+    if (!disputeReason.trim()) return;
+    setSubmittingDispute(true);
+    try {
+      const res = await fetch("/api/tickets", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ 
+          orderItemId: selectedItem.id, 
+          reason: disputeReason 
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      
+      alert("Issue reported successfully. Admin will review it.");
+      setShowDisputeModal(false);
+      setDisputeReason("");
+    } catch (err: any) {
+      alert("Failed to report: " + err.message);
+    } finally {
+      setSubmittingDispute(false);
+    }
   };
 
   if (loading) return <div className="min-h-screen bg-background flex items-center justify-center">Loading...</div>;
@@ -122,13 +157,21 @@ export default function OrderSuccessPage({ params }: { params: Promise<{ id: str
                       <Eye size={18} /> {revealing[item.productItemId] ? "Revealing..." : "Reveal"}
                     </button>
                   ) : (
-                    <button 
-                      onClick={() => handleCopy(item.credentialText, item.id)}
-                      className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-surface hover:bg-border-default border border-border-default text-foreground px-4 py-2 rounded-lg font-bold transition-colors"
-                    >
-                      {copied[item.id] ? <Check size={18} className="text-success" /> : <Copy size={18} />}
-                      {copied[item.id] ? "Copied!" : "Copy"}
-                    </button>
+                    <div className="flex flex-col gap-2 w-full md:w-auto">
+                      <button 
+                        onClick={() => handleCopy(item.credentialText, item.id)}
+                        className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-surface hover:bg-border-default border border-border-default text-foreground px-4 py-2 rounded-lg font-bold transition-colors"
+                      >
+                        {copied[item.id] ? <Check size={18} className="text-success" /> : <Copy size={18} />}
+                        {copied[item.id] ? "Copied!" : "Copy"}
+                      </button>
+                      <button 
+                        onClick={() => handleReportIssue(item)}
+                        className="flex-1 md:flex-none flex items-center justify-center gap-2 text-error hover:bg-error/10 px-4 py-2 rounded-lg font-bold transition-colors text-sm"
+                      >
+                        <AlertCircle size={16} /> Report Issue
+                      </button>
+                    </div>
                   )}
                 </div>
               </div>
@@ -145,6 +188,45 @@ export default function OrderSuccessPage({ params }: { params: Promise<{ id: str
           </Link>
         </div>
       </main>
+
+      {/* Dispute Modal */}
+      {showDisputeModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="vault-card w-full max-w-lg p-8 animate-in fade-in zoom-in duration-200">
+            <h2 className="text-2xl font-bold font-[family-name:var(--font-syne)] text-foreground mb-4">Report an Issue</h2>
+            <p className="text-text-secondary mb-6">
+              Please describe what's wrong with this account. The admin will review your report and take appropriate action.
+            </p>
+            
+            <div className="mb-6">
+              <label className="block text-sm font-bold text-foreground mb-2">Describe the Problem</label>
+              <textarea 
+                className="w-full bg-surface-elevated border border-border-default rounded-xl p-4 text-foreground focus:outline-none focus:border-primary transition-colors min-h-[120px]"
+                placeholder="Example: The account password is incorrect or it's already banned."
+                value={disputeReason}
+                onChange={(e) => setDisputeReason(e.target.value)}
+              />
+            </div>
+            
+            <div className="flex gap-4">
+              <button 
+                onClick={() => setShowDisputeModal(false)}
+                className="flex-1 px-6 py-3 rounded-xl bg-surface-elevated hover:bg-border-default text-foreground font-bold transition-colors"
+                disabled={submittingDispute}
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={submitDispute}
+                className="flex-1 px-6 py-3 rounded-xl bg-error hover:bg-red-600 text-white font-bold transition-colors disabled:opacity-50"
+                disabled={submittingDispute || !disputeReason.trim()}
+              >
+                {submittingDispute ? "Submitting..." : "Submit Report"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

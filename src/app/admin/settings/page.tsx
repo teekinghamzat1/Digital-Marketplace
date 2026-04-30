@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Settings, Save, Globe, Shield } from "lucide-react";
+import { Settings, Save, Globe, Shield, Mail } from "lucide-react";
 import Swal from "sweetalert2";
 
 export default function AdminSettings() {
@@ -9,7 +9,12 @@ export default function AdminSettings() {
     site_name: "Sumon Mondal Logs Marketplace",
     contact_email: "",
     paystack_public_key: "",
-    announcement_text: ""
+    announcement_text: "",
+    smtp_host: "",
+    smtp_port: "587",
+    smtp_user: "",
+    smtp_pass: "",
+    smtp_from: "Marketplace"
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -131,6 +136,67 @@ export default function AdminSettings() {
                 onChange={(e) => setSettings({...settings, paystack_public_key: e.target.value})}
                 className="w-full bg-surface-elevated border border-border-default rounded-xl px-4 py-2.5 text-foreground font-mono text-sm"
                 placeholder="pk_test_..."
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="vault-card p-8">
+          <h2 className="text-xl font-bold font-[family-name:var(--font-syne)] text-foreground mb-6 flex items-center gap-2">
+            <Mail size={20} className="text-primary" /> Email (SMTP) Configuration
+          </h2>
+          
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-bold text-foreground mb-1.5">SMTP Host</label>
+                <input 
+                  type="text" 
+                  value={settings.smtp_host}
+                  onChange={(e) => setSettings({...settings, smtp_host: e.target.value})}
+                  className="w-full bg-surface-elevated border border-border-default rounded-xl px-4 py-2.5 text-foreground"
+                  placeholder="smtp.gmail.com"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-foreground mb-1.5">SMTP Port</label>
+                <input 
+                  type="text" 
+                  value={settings.smtp_port}
+                  onChange={(e) => setSettings({...settings, smtp_port: e.target.value})}
+                  className="w-full bg-surface-elevated border border-border-default rounded-xl px-4 py-2.5 text-foreground"
+                  placeholder="587"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-foreground mb-1.5">SMTP Username</label>
+              <input 
+                type="text" 
+                value={settings.smtp_user}
+                onChange={(e) => setSettings({...settings, smtp_user: e.target.value})}
+                className="w-full bg-surface-elevated border border-border-default rounded-xl px-4 py-2.5 text-foreground"
+                placeholder="user@example.com"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-foreground mb-1.5">SMTP Password</label>
+              <input 
+                type="password" 
+                value={settings.smtp_pass}
+                onChange={(e) => setSettings({...settings, smtp_pass: e.target.value})}
+                className="w-full bg-surface-elevated border border-border-default rounded-xl px-4 py-2.5 text-foreground"
+                placeholder="••••••••"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-foreground mb-1.5">Sender Name</label>
+              <input 
+                type="text" 
+                value={settings.smtp_from}
+                onChange={(e) => setSettings({...settings, smtp_from: e.target.value})}
+                className="w-full bg-surface-elevated border border-border-default rounded-xl px-4 py-2.5 text-foreground"
+                placeholder="Marketplace Admin"
               />
             </div>
           </div>

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/auth";
+import { sendEmail } from "@/lib/email";
 
 export async function POST(request: NextRequest) {
   try {
@@ -99,10 +100,29 @@ export async function POST(request: NextRequest) {
         }
       });
 
-      return order;
+      return { order, email: user.email, productName: product.name };
     });
 
-    return NextResponse.json(result, { status: 201 });
+    // Send purchase confirmation email (non-blocking)
+    if (result.email) {
+      sendEmail({
+        to: result.email,
+        subject: `Purchase Successful: ${result.productName}`,
+        html: `
+          <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+            <h2 style="color: #10b981;">Order Confirmed!</h2>
+            <p>Your purchase of <strong>${result.productName} (x${quantity})</strong> was successful.</p>
+            <p><strong>Total Amount:</strong> ₦${totalAmount.toLocaleString()}</p>
+            <p>You can access your logs immediately from your dashboard.</p>
+            <div style="margin-top: 30px; text-align: center;">
+              <a href="${process.env.NEXTAUTH_URL || request.nextUrl.origin}/orders/${result.order.id}/success" style="background: #10b981; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold;">View My Logs</a>
+            </div>
+          </div>
+        `
+      }).catch(console.error);
+    }
+
+    return NextResponse.json(result.order, { status: 201 });
   } catch (error: any) {
     if (error.message.includes("Insufficient balance")) {
       return NextResponse.json({ error: error.message }, { status: 402 }); // Payment Required
