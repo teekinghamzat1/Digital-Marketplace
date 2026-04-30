@@ -26,6 +26,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
+    const paystackSecret = process.env.PAYSTACK_SECRET_KEY;
+    if (!paystackSecret) {
+      return NextResponse.json({ error: "Payment gateway configuration error" }, { status: 500 });
+    }
+
     // Generate a unique reference
     const reference = `FUND-${crypto.randomBytes(8).toString('hex')}`;
 
@@ -40,11 +45,6 @@ export async function POST(request: NextRequest) {
         status: "pending"
       }
     });
-
-    const paystackSecret = process.env.PAYSTACK_SECRET_KEY;
-    if (!paystackSecret) {
-      return NextResponse.json({ error: "Payment gateway configuration error" }, { status: 500 });
-    }
 
     const amountInKobo = Math.round(amount * 100);
     const baseUrl = process.env.NEXTAUTH_URL || request.nextUrl.origin;

@@ -19,7 +19,10 @@ export async function GET(request: NextRequest) {
     });
 
     const transactions = await prisma.walletTransaction.findMany({
-      where: { userId: userId },
+      where: { 
+        userId: userId,
+        status: "successful"
+      },
       orderBy: { createdAt: 'desc' },
       take: limit ? parseInt(limit) : undefined
     });
