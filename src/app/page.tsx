@@ -1,6 +1,7 @@
 import { Navbar } from "@/components/navbar";
 import prisma from "@/lib/prisma";
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { ArrowRight, ShieldCheck, Zap, Lock } from "lucide-react";
 
 async function getStats() {
@@ -26,6 +27,8 @@ async function getCategories() {
 export default async function Home() {
   const stats = await getStats();
   const categories = await getCategories();
+  const cookieStore = await cookies();
+  const isLoggedIn = cookieStore.has("user_session");
 
   return (
     <div className="min-h-screen bg-background">
@@ -48,9 +51,15 @@ export default async function Home() {
             <Link href="/shop" className="bg-primary hover:bg-primary-hover text-white px-8 py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-2 transition-transform hover:scale-105">
               Browse Products <ArrowRight size={20} />
             </Link>
-            <Link href="/register" className="bg-surface-elevated hover:bg-border-default text-foreground px-8 py-4 rounded-xl font-bold text-lg flex items-center justify-center transition-colors">
-              Get Started
-            </Link>
+            {isLoggedIn ? (
+              <Link href="/dashboard" className="bg-surface-elevated hover:bg-border-default text-foreground px-8 py-4 rounded-xl font-bold text-lg flex items-center justify-center transition-colors">
+                Go to Dashboard
+              </Link>
+            ) : (
+              <Link href="/register" className="bg-surface-elevated hover:bg-border-default text-foreground px-8 py-4 rounded-xl font-bold text-lg flex items-center justify-center transition-colors">
+                Get Started
+              </Link>
+            )}
           </div>
         </section>
 
