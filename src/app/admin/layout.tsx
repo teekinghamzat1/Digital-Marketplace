@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Package, Users, Settings, LogOut, Menu, X, Tags } from "lucide-react";
+import { LayoutDashboard, Package, Users, Settings, LogOut, Menu, X, Tags, AlertCircle } from "lucide-react";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -20,6 +20,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { name: "Categories", href: "/admin/categories", icon: Tags },
     { name: "Products & Inventory", href: "/admin/products", icon: Package },
     { name: "Users & Wallets", href: "/admin/users", icon: Users },
+    { name: "Tickets & Disputes", href: "/admin/tickets", icon: AlertCircle },
     { name: "Site Settings", href: "/admin/settings", icon: Settings },
   ];
 
