@@ -37,9 +37,15 @@ export function Navbar() {
 
           <div className="flex items-center gap-3">
             {user ? (
-              <Link href="/dashboard" className="flex items-center gap-2 bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-lg font-medium transition-colors">
-                <span className="hidden sm:inline">Dashboard</span>
-              </Link>
+              <div className="flex items-center gap-3">
+                <div className="hidden md:flex flex-col items-end mr-2">
+                  <span className="text-[10px] text-text-muted font-bold uppercase tracking-widest">Balance</span>
+                  <span className="text-sm font-black text-primary">₦{Number(user.walletBalance).toLocaleString()}</span>
+                </div>
+                <Link href="/dashboard" className="flex items-center gap-2 bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-lg font-medium transition-colors shadow-lg shadow-primary/20">
+                  <span className="hidden sm:inline">Dashboard</span>
+                </Link>
+              </div>
             ) : (
               <>
                 <Link href="/login" className="flex items-center gap-2 text-text-secondary hover:text-primary font-medium transition-colors">

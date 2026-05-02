@@ -1,24 +1,28 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Pencil, Trash2, Package, Upload } from "lucide-react";
+import { Plus, Pencil, Trash2, Package, Layers, Settings2 } from "lucide-react";
+import Swal from "sweetalert2";
 
 export default function AdminProducts() {
   const [products, setProducts] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
-  const [inventoryModalOpen, setInventoryModalOpen] = useState(false);
+  const [tierModalOpen, setTierModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any>(null);
-  const [inventoryProduct, setInventoryProduct] = useState<any>(null);
-  const [bulkData, setBulkData] = useState("");
+  const [activeProduct, setActiveProduct] = useState<any>(null);
   const [formData, setFormData] = useState({ 
     name: "", 
     categoryId: "", 
-    price: "", 
-    shortDescription: "", 
-    fullDescription: "", 
+    description: "", 
     isActive: true 
+  });
+  const [tierFormData, setTierFormData] = useState({
+    id: "",
+    label: "",
+    quantity: "",
+    price: ""
   });
 
   useEffect(() => {
@@ -75,24 +79,46 @@ export default function AdminProducts() {
     }
   };
 
-  const handleInventorySubmit = async (e: React.FormEvent) => {
+  const handleTierSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!bulkData.trim()) return;
-
-    const res = await fetch(`/api/admin/inventory-upload`, {
-      method: "POST",
+    const method = tierFormData.id ? "PUT" : "POST";
+    const res = await fetch("/api/admin/tiers", {
+      method,
       headers: { "Content-Type": "application/json" },
       credentials: "include",
-      body: JSON.stringify({ productId: inventoryProduct.id, bulk_data: bulkData })
+      body: JSON.stringify({
+        ...tierFormData,
+        productId: activeProduct.id
+      })
     });
 
     if (res.ok) {
-      setInventoryModalOpen(false);
-      setBulkData("");
-      fetchProducts();
+      setTierFormData({ id: "", label: "", quantity: "", price: "" });
+      // Refresh current product's tiers
+      const prodRes = await fetch("/api/admin/products", { credentials: 'include' });
+      const prodData = await prodRes.json();
+      setProducts(prodData);
+      const updatedProduct = prodData.find((p: any) => p.id === activeProduct.id);
+      setActiveProduct(updatedProduct);
+      Swal.fire("Success", "Tier saved successfully", "success");
     } else {
       const data = await res.json();
-      alert(data.error);
+      Swal.fire("Error", data.error, "error");
+    }
+  };
+
+  const deleteTier = async (tierId: string) => {
+    if (!confirm("Are you sure?")) return;
+    const res = await fetch(`/api/admin/tiers?id=${tierId}`, {
+      method: "DELETE",
+      credentials: "include"
+    });
+    if (res.ok) {
+      const prodRes = await fetch("/api/admin/products", { credentials: 'include' });
+      const prodData = await prodRes.json();
+      setProducts(prodData);
+      const updatedProduct = prodData.find((p: any) => p.id === activeProduct.id);
+      setActiveProduct(updatedProduct);
     }
   };
 
@@ -101,36 +127,20 @@ export default function AdminProducts() {
     setFormData({
       name: prod.name,
       categoryId: prod.categoryId,
-      price: prod.price.toString(),
-      shortDescription: prod.shortDescription || "",
-      fullDescription: prod.fullDescription || "",
+      description: prod.description || "",
       isActive: prod.isActive
     });
     setModalOpen(true);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this product?")) return;
-    const res = await fetch(`/api/admin/products/${id}`, { 
-      method: "DELETE",
-      credentials: "include" 
-    });
-    if (res.ok) {
-      fetchProducts();
-    } else {
-      const data = await res.json();
-      alert(data.error);
-    }
-  };
-
   return (
     <div>
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold font-[family-name:var(--font-syne)] text-foreground">Products</h1>
+        <h1 className="text-3xl font-bold font-[family-name:var(--font-syne)] text-foreground">Products & Pricing</h1>
         <button 
           onClick={() => { 
             setEditingProduct(null); 
-            setFormData({ name: "", categoryId: categories[0]?.id || "", price: "", shortDescription: "", fullDescription: "", isActive: true }); 
+            setFormData({ name: "", categoryId: categories[0]?.id || "", description: "", isActive: true }); 
             setModalOpen(true); 
           }}
           className="flex items-center gap-2 bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-lg font-bold transition-colors"
@@ -141,8 +151,7 @@ export default function AdminProducts() {
 
       {loading ? (
         <div className="animate-pulse space-y-4">
-          <div className="h-12 bg-surface-elevated rounded-lg"></div>
-          <div className="h-12 bg-surface-elevated rounded-lg"></div>
+          {[...Array(5)].map((_, i) => <div key={i} className="h-16 bg-surface-elevated rounded-lg"></div>)}
         </div>
       ) : (
         <div className="bg-surface border border-border-default rounded-xl overflow-hidden">
@@ -151,24 +160,27 @@ export default function AdminProducts() {
               <tr>
                 <th className="px-6 py-4 text-xs font-bold text-text-muted uppercase tracking-wider">Product</th>
                 <th className="px-6 py-4 text-xs font-bold text-text-muted uppercase tracking-wider">Category</th>
-                <th className="px-6 py-4 text-xs font-bold text-text-muted uppercase tracking-wider">Price</th>
-                <th className="px-6 py-4 text-xs font-bold text-text-muted uppercase tracking-wider">Stock</th>
+                <th className="px-6 py-4 text-xs font-bold text-text-muted uppercase tracking-wider">Tiers</th>
                 <th className="px-6 py-4 text-xs font-bold text-text-muted uppercase tracking-wider">Status</th>
                 <th className="px-6 py-4 text-xs font-bold text-text-muted uppercase tracking-wider text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border-default">
-              {Array.isArray(products) && products.map(prod => (
+              {products.map(prod => (
                 <tr key={prod.id} className="hover:bg-surface-elevated/50">
                   <td className="px-6 py-4">
                     <div className="font-bold text-foreground">{prod.name}</div>
                   </td>
                   <td className="px-6 py-4 text-sm text-text-secondary">{prod.category.name}</td>
-                  <td className="px-6 py-4 text-sm font-bold text-foreground">₦{Number(prod.price).toLocaleString()}</td>
                   <td className="px-6 py-4">
-                    <span className={`font-bold ${prod._count.items > 0 ? 'text-success' : 'text-error'}`}>
-                      {prod._count.items} In Stock
-                    </span>
+                    <div className="flex flex-wrap gap-1">
+                      {prod.pricingTiers.map((t: any) => (
+                        <span key={t.id} className="text-[10px] px-1.5 py-0.5 bg-surface-elevated rounded border border-border-default text-text-muted">
+                          {t.label} (₦{Number(t.price).toLocaleString()})
+                        </span>
+                      ))}
+                      {prod.pricingTiers.length === 0 && <span className="text-xs text-error italic">No tiers</span>}
+                    </div>
                   </td>
                   <td className="px-6 py-4">
                     <span className={`px-2 py-1 rounded text-xs font-bold ${prod.isActive ? 'bg-success/10 text-success' : 'bg-error/10 text-error'}`}>
@@ -177,14 +189,13 @@ export default function AdminProducts() {
                   </td>
                   <td className="px-6 py-4 text-right space-x-2">
                     <button 
-                      onClick={() => { setInventoryProduct(prod); setInventoryModalOpen(true); }}
-                      className="text-text-secondary hover:text-primary transition-colors" 
-                      title="Add Inventory"
+                      onClick={() => { setActiveProduct(prod); setTierModalOpen(true); }}
+                      className="text-text-secondary hover:text-primary transition-colors p-2" 
+                      title="Manage Tiers"
                     >
-                      <Upload size={18} />
+                      <Layers size={18} />
                     </button>
-                    <button onClick={() => handleEdit(prod)} className="text-text-secondary hover:text-primary transition-colors"><Pencil size={18} /></button>
-                    <button onClick={() => handleDelete(prod.id)} className="text-text-secondary hover:text-error transition-colors"><Trash2 size={18} /></button>
+                    <button onClick={() => handleEdit(prod)} className="text-text-secondary hover:text-primary transition-colors p-2"><Pencil size={18} /></button>
                   </td>
                 </tr>
               ))}
@@ -193,102 +204,129 @@ export default function AdminProducts() {
         </div>
       )}
 
-      {/* Modal Product */}
+      {/* Product Modal */}
       {modalOpen && (
         <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-          <div className="vault-card w-full max-w-2xl p-8 max-h-[90vh] overflow-y-auto">
+          <div className="vault-card w-full max-w-xl p-8">
             <h2 className="text-2xl font-bold mb-6 font-[family-name:var(--font-syne)]">{editingProduct ? "Edit Product" : "Add Product"}</h2>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-bold mb-1.5">Product Name</label>
-                  <input 
-                    type="text" 
-                    value={formData.name} 
-                    onChange={(e) => setFormData({...formData, name: e.target.value})}
-                    className="w-full bg-surface-elevated border border-border-default rounded-lg px-4 py-2 text-foreground" 
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-bold mb-1.5">Category</label>
-                  <select 
-                    value={formData.categoryId} 
-                    onChange={(e) => setFormData({...formData, categoryId: e.target.value})}
-                    className="w-full bg-surface-elevated border border-border-default rounded-lg px-4 py-2 text-foreground"
-                    required
-                  >
-                    {categories.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
-                  </select>
-                </div>
-              </div>
               <div>
-                <label className="block text-sm font-bold mb-1.5">Price (₦)</label>
+                <label className="block text-sm font-bold mb-1.5">Product Name</label>
                 <input 
-                  type="number" 
-                  value={formData.price} 
-                  onChange={(e) => setFormData({...formData, price: e.target.value})}
-                  className="w-full bg-surface-elevated border border-border-default rounded-lg px-4 py-2 text-foreground font-bold" 
+                  type="text" 
+                  value={formData.name} 
+                  onChange={(e) => setFormData({...formData, name: e.target.value})}
+                  className="w-full bg-surface-elevated border border-border-default rounded-lg px-4 py-2 text-foreground" 
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-bold mb-1.5">Short Description</label>
-                <input 
-                  type="text" 
-                  value={formData.shortDescription} 
-                  onChange={(e) => setFormData({...formData, shortDescription: e.target.value})}
-                  className="w-full bg-surface-elevated border border-border-default rounded-lg px-4 py-2 text-foreground" 
-                />
+                <label className="block text-sm font-bold mb-1.5">Category</label>
+                <select 
+                  value={formData.categoryId} 
+                  onChange={(e) => setFormData({...formData, categoryId: e.target.value})}
+                  className="w-full bg-surface-elevated border border-border-default rounded-lg px-4 py-2 text-foreground"
+                  required
+                >
+                  <option value="">Select Category</option>
+                  {categories.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
+                </select>
               </div>
               <div>
-                <label className="block text-sm font-bold mb-1.5">Full Description</label>
+                <label className="block text-sm font-bold mb-1.5">Description</label>
                 <textarea 
-                  value={formData.fullDescription} 
-                  onChange={(e) => setFormData({...formData, fullDescription: e.target.value})}
-                  className="w-full bg-surface-elevated border border-border-default rounded-lg px-4 py-2 text-foreground h-32"
+                  value={formData.description} 
+                  onChange={(e) => setFormData({...formData, description: e.target.value})}
+                  className="w-full bg-surface-elevated border border-border-default rounded-lg px-4 py-2 text-foreground h-24"
                 />
               </div>
               <div className="flex items-center gap-2">
-                <input 
-                  type="checkbox" 
-                  checked={formData.isActive} 
-                  onChange={(e) => setFormData({...formData, isActive: e.target.checked})}
-                  id="prodActive"
-                />
-                <label htmlFor="prodActive" className="text-sm font-bold">Active</label>
+                <input type="checkbox" checked={formData.isActive} onChange={(e) => setFormData({...formData, isActive: e.target.checked})} id="pActive" />
+                <label htmlFor="pActive" className="text-sm font-bold">Active</label>
               </div>
               <div className="flex gap-4 pt-4">
                 <button type="button" onClick={() => setModalOpen(false)} className="flex-1 px-4 py-2 rounded-lg border border-border-default font-bold">Cancel</button>
-                <button type="submit" className="flex-1 px-4 py-2 rounded-lg bg-primary text-white font-bold">Save</button>
+                <button type="submit" className="flex-1 px-4 py-2 rounded-lg bg-primary text-white font-bold">Save Product</button>
               </div>
             </form>
           </div>
         </div>
       )}
 
-      {/* Modal Inventory */}
-      {inventoryModalOpen && (
+      {/* Tiers Modal */}
+      {tierModalOpen && activeProduct && (
         <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-          <div className="vault-card w-full max-w-xl p-8">
-            <h2 className="text-2xl font-bold mb-2 font-[family-name:var(--font-syne)]">Bulk Add Inventory</h2>
-            <p className="text-text-secondary text-sm mb-6">Enter each account/credential on a new line. Each line will create one product item.</p>
-            <form onSubmit={handleInventorySubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-bold mb-1.5">Product: {inventoryProduct?.name}</label>
-                <textarea 
-                  value={bulkData} 
-                  onChange={(e) => setBulkData(e.target.value)}
-                  className="w-full bg-surface-elevated border border-border-default rounded-lg px-4 py-2 text-foreground h-64 font-mono text-sm"
-                  placeholder="user:pass:extra&#10;user2:pass2:extra2"
+          <div className="vault-card w-full max-w-2xl p-8 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold font-[family-name:var(--font-syne)]">Manage Tiers: {activeProduct.name}</h2>
+              <button onClick={() => setTierModalOpen(false)} className="text-text-muted hover:text-foreground">Close</button>
+            </div>
+
+            <form onSubmit={handleTierSubmit} className="bg-surface-elevated p-4 rounded-xl mb-8 space-y-4">
+              <h3 className="font-bold text-sm uppercase tracking-widest text-primary">{tierFormData.id ? "Edit Tier" : "Add New Tier"}</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <input 
+                  placeholder="Label (e.g. 1, 5, 50)" 
+                  value={tierFormData.label} 
+                  onChange={(e) => setTierFormData({...tierFormData, label: e.target.value})}
+                  className="bg-surface border border-border-default rounded-lg px-3 py-2 text-sm" 
+                  required
+                />
+                <input 
+                  type="number" 
+                  placeholder="Quantity" 
+                  value={tierFormData.quantity} 
+                  onChange={(e) => setTierFormData({...tierFormData, quantity: e.target.value})}
+                  className="bg-surface border border-border-default rounded-lg px-3 py-2 text-sm" 
+                  required
+                />
+                <input 
+                  type="number" 
+                  placeholder="Total Price (₦)" 
+                  value={tierFormData.price} 
+                  onChange={(e) => setTierFormData({...tierFormData, price: e.target.value})}
+                  className="bg-surface border border-border-default rounded-lg px-3 py-2 text-sm" 
                   required
                 />
               </div>
-              <div className="flex gap-4 pt-4">
-                <button type="button" onClick={() => setInventoryModalOpen(false)} className="flex-1 px-4 py-2 rounded-lg border border-border-default font-bold">Cancel</button>
-                <button type="submit" className="flex-1 px-4 py-2 rounded-lg bg-primary text-white font-bold">Add Items</button>
+              <div className="flex gap-2">
+                <button type="submit" className="bg-primary text-white px-4 py-2 rounded-lg text-sm font-bold">
+                  {tierFormData.id ? "Update Tier" : "Add Tier"}
+                </button>
+                {tierFormData.id && (
+                  <button type="button" onClick={() => setTierFormData({id:"", label:"", quantity:"", price:""})} className="bg-surface border border-border-default px-4 py-2 rounded-lg text-sm font-bold">
+                    Cancel Edit
+                  </button>
+                )}
               </div>
             </form>
+
+            <div className="space-y-2">
+              <h3 className="font-bold text-sm uppercase tracking-widest text-text-muted mb-4">Current Tiers</h3>
+              {activeProduct.pricingTiers.map((tier: any) => (
+                <div key={tier.id} className="flex items-center justify-between p-4 bg-surface border border-border-default rounded-xl">
+                  <div>
+                    <span className="font-bold text-foreground mr-4">Tier {tier.label}</span>
+                    <span className="text-text-secondary text-sm">{tier.quantity} Units @ ₦{Number(tier.price).toLocaleString()}</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <button 
+                      onClick={() => setTierFormData({ id: tier.id, label: tier.label, quantity: tier.quantity.toString(), price: tier.price.toString() })}
+                      className="text-primary hover:bg-primary/10 p-2 rounded-lg transition-colors"
+                    >
+                      <Pencil size={16} />
+                    </button>
+                    <button 
+                      onClick={() => deleteTier(tier.id)}
+                      className="text-error hover:bg-error/10 p-2 rounded-lg transition-colors"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {activeProduct.pricingTiers.length === 0 && <p className="text-center text-text-muted italic py-8">No tiers added for this product.</p>}
+            </div>
           </div>
         </div>
       )}

@@ -20,6 +20,7 @@ model User {
   soldItems       ProductItem[]
   sessions        Session[]
   tickets         Ticket[]
+  userTransactions Transaction[]    @relation("UserTransactions")
 
   @@map("users")
 }
@@ -39,11 +40,8 @@ model Admin {
 model Category {
   id          String    @id @default(uuid()) @db.Uuid
   name        String    @db.VarChar(100)
-  icon        String?   @db.VarChar(10)
-  description String?   @db.Text
-  isActive    Boolean   @default(true) @map("is_active")
-  sortOrder   Int       @default(0) @map("sort_order")
   createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime? @default(now()) @updatedAt @map("updated_at")
   
   products    Product[]
 
@@ -54,17 +52,49 @@ model Product {
   id               String   @id @default(uuid()) @db.Uuid
   categoryId       String   @map("category_id") @db.Uuid
   name             String   @db.VarChar(150)
-  shortDescription String?  @map("short_description") @db.Text
-  fullDescription  String?  @map("full_description") @db.Text
-  price            Decimal  @db.Decimal(12, 2)
+  description      String?  @db.Text
   isActive         Boolean  @default(true) @map("is_active")
   createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime? @default(now()) @updatedAt @map("updated_at")
 
   category         Category      @relation(fields: [categoryId], references: [id])
+  pricingTiers     PricingTier[]
+  transactions     Transaction[]
   items            ProductItem[]
   orders           Order[]
 
   @@map("products")
+}
+
+model PricingTier {
+  id          String   @id @default(uuid()) @db.Uuid
+  productId   String   @map("product_id") @db.Uuid
+  label       String   @db.VarChar(50)
+  quantity    Int
+  price       Decimal  @db.Decimal(12, 2)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")
+
+  product      Product       @relation(fields: [productId], references: [id])
+  transactions Transaction[]
+
+  @@map("pricing_tiers")
+}
+
+model Transaction {
+  id            String            @id @default(uuid()) @db.Uuid
+  userId        String            @map("user_id") @db.Uuid
+  productId     String            @map("product_id") @db.Uuid
+  pricingTierId String            @map("pricing_tier_id") @db.Uuid
+  amount        Decimal           @db.Decimal(12, 2)
+  status        TransactionStatus @default(pending)
+  createdAt     DateTime          @default(now()) @map("created_at")
+
+  user        User        @relation(fields: [userId], references: [id], name: "UserTransactions")
+  product     Product     @relation(fields: [productId], references: [id])
+  pricingTier PricingTier @relation(fields: [pricingTierId], references: [id])
+
+  @@map("transactions")
 }
 
 model ProductItem {

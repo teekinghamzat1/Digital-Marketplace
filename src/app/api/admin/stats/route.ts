@@ -1,40 +1,39 @@
 import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 import { getAdminFromRequest } from "@/lib/auth";
 
 export async function GET(request: NextRequest) {
   try {
-    const payload = await getAdminFromRequest(request);
-    if (!payload || !payload.id) {
+    const admin = await getAdminFromRequest(request);
+    if (!admin) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const [totalUsers, totalOrders, totalRevenueData, activeProducts, availableItems] = await Promise.all([
+    const [totalUsers, totalTransactions, totalRevenueData, activeProducts, transactions] = await Promise.all([
       prisma.user.count(),
-      prisma.order.count(),
-      prisma.order.aggregate({
-        _sum: { totalAmount: true }
+      prisma.transaction.count(),
+      prisma.transaction.aggregate({
+        where: { status: "successful" },
+        _sum: { amount: true }
       }),
       prisma.product.count({ where: { isActive: true } }),
-      prisma.productItem.count({ where: { isSold: false } })
+      prisma.transaction.findMany({
+        take: 50,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          user: { select: { email: true } },
+          product: { select: { name: true } },
+          pricingTier: { select: { label: true, quantity: true } }
+        }
+      })
     ]);
-
-    // Calculate recent sales (last 30 days)
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-    const recentSales = await prisma.order.aggregate({
-      where: { createdAt: { gte: thirtyDaysAgo } },
-      _sum: { totalAmount: true }
-    });
 
     return NextResponse.json({
       totalUsers,
-      totalOrders,
-      totalRevenue: totalRevenueData._sum.totalAmount || 0,
-      recentSales: recentSales._sum.totalAmount || 0,
+      totalTransactions,
+      totalRevenue: totalRevenueData._sum.amount || 0,
       activeProducts,
-      availableItems
+      transactions
     }, { status: 200 });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });

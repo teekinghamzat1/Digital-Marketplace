@@ -1,16 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 import { getAdminFromRequest } from "@/lib/auth";
 
 export async function GET(request: NextRequest) {
   try {
-    const payload = await getAdminFromRequest(request);
-    if (!payload || !payload.id) {
+    const admin = await getAdminFromRequest(request);
+    if (!admin) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const categories = await prisma.category.findMany({
-      orderBy: { sortOrder: 'asc' },
+      orderBy: { name: 'asc' },
       include: {
         _count: {
           select: { products: true }
@@ -25,23 +25,17 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const payload = await getAdminFromRequest(request);
-    if (!payload || !payload.id) {
+    const admin = await getAdminFromRequest(request);
+    if (!admin) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { name, icon, description, isActive, sortOrder } = await request.json();
+    const { name } = await request.json();
     
     if (!name) return NextResponse.json({ error: "Name is required" }, { status: 400 });
 
     const category = await prisma.category.create({
-      data: {
-        name,
-        icon,
-        description,
-        isActive: isActive !== undefined ? isActive : true,
-        sortOrder: sortOrder || 0
-      }
+      data: { name }
     });
 
     return NextResponse.json(category, { status: 201 });
