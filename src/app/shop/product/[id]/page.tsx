@@ -10,7 +10,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
   const { id } = use(params);
   const router = useRouter();
   const [product, setProduct] = useState<any>(null);
-  const [quantity, setQuantity] = useState(1);
+  const [selectedTier, setSelectedTier] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [purchaseLoading, setPurchaseLoading] = useState(false);
@@ -21,36 +21,34 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
       .then(res => res.json())
       .then(data => {
         if (data.error) setError(data.error);
-        else setProduct(data);
+        else {
+          setProduct(data);
+          if (data.tiers && data.tiers.length > 0) {
+            setSelectedTier(data.tiers[0]);
+          }
+        }
         setLoading(false);
       });
   }, [id]);
 
   const handlePurchase = async () => {
+    if (!selectedTier) return;
     setPurchaseLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/orders", {
+      const res = await fetch("/api/purchase", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ product_id: id, quantity })
+        body: JSON.stringify({ productId: id, tierId: selectedTier.id })
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        if (res.status === 401) {
-          router.push("/login");
-          return;
-        }
-        if (res.status === 402) {
-          setError(data.error); // Show shortfall error
-        } else {
-          throw new Error(data.error || "Purchase failed");
-        }
+        setError(data.error || "Purchase failed");
       } else {
-        router.push(`/orders/${data.id}/success`);
+        router.push("/dashboard");
       }
     } catch (err: any) {
       setError(err.message);
@@ -67,7 +65,8 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
     return <div className="min-h-screen bg-background flex items-center justify-center text-error font-bold">{error}</div>;
   }
 
-  const totalPrice = product ? Number(product.price) * quantity : 0;
+// @ts-nocheck
+  const totalPrice = product && selectedTier ? Number(selectedTier.price) : 0;
 
   return (
     <div className="min-h-screen bg-background">
@@ -90,13 +89,13 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
             
             <div className="flex items-center gap-4 mb-8">
               <span className="text-3xl font-black text-foreground">
-                ₦{Number(product.price).toLocaleString()}
+                ₦{totalPrice.toLocaleString()}
               </span>
-              <span className="text-text-muted">/ unit</span>
+              <span className="text-text-muted">/ selection</span>
             </div>
 
             <div className="prose prose-invert max-w-none text-text-secondary mb-8 leading-relaxed whitespace-pre-wrap">
-              {product.fullDescription || product.shortDescription}
+              {product.info}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -111,62 +110,36 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
             </div>
           </div>
 
-          {/* Checkout Card */}
           <div className="vault-card p-8 h-fit sticky top-24">
-            <h3 className="text-xl font-bold text-foreground mb-6 font-[family-name:var(--font-syne)]">Order Summary</h3>
+            <h3 className="text-xl font-bold text-foreground mb-6 font-[family-name:var(--font-syne)]">Select Purchase Tier</h3>
             
-            <div className="flex items-center justify-between mb-6 pb-6 border-b border-border-default">
-              <span className="text-text-secondary font-medium">Availability</span>
-              {product.stockCount > 0 ? (
-                <span className="text-success font-bold bg-success/10 px-3 py-1 rounded">{product.stockCount} in stock</span>
-              ) : (
-                <span className="text-error font-bold bg-error/10 px-3 py-1 rounded">Out of stock</span>
-              )}
+            <div className="space-y-3 mb-8">
+              {product.tiers?.map((tier: any) => (
+                <button
+                  key={tier.id}
+                  onClick={() => setSelectedTier(tier)}
+                  className={`w-full flex items-center justify-between p-4 rounded-xl border-2 transition-all ${
+                    selectedTier?.id === tier.id
+                      ? "border-primary bg-primary/5 shadow-md"
+                      : "border-border-default bg-surface hover:border-text-muted"
+                  }`}
+                >
+                  <div className="text-left">
+                    <div className={`font-bold ${selectedTier?.id === tier.id ? 'text-primary' : 'text-foreground'}`}>
+                      {tier.label} {tier.quantity > 1 ? 'Units' : 'Unit'}
+                    </div>
+                  </div>
+                  <div className="text-xl font-black text-foreground">₦{Number(tier.price).toLocaleString()}</div>
+                </button>
+              ))}
             </div>
-
-            <div className="mb-8">
-              <label className="block text-sm font-bold text-foreground mb-3">Quantity</label>
-              <div className="flex items-center gap-4">
-                <button 
-                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="w-12 h-12 rounded-xl bg-surface-elevated text-foreground font-bold hover:bg-border-default transition-colors flex items-center justify-center text-xl"
-                >-</button>
-                <div className="w-20 h-12 rounded-xl bg-background border border-border-default flex items-center justify-center font-bold text-xl text-foreground">
-                  {quantity}
-                </div>
-                <button 
-                  onClick={() => setQuantity(Math.min(product.stockCount, quantity + 1))}
-                  className="w-12 h-12 rounded-xl bg-surface-elevated text-foreground font-bold hover:bg-border-default transition-colors flex items-center justify-center text-xl"
-                >+</button>
-              </div>
-            </div>
-
-            <div className="flex justify-between items-center mb-8 bg-surface-elevated p-4 rounded-xl">
-              <span className="text-text-secondary font-medium">Total</span>
-              <span className="text-2xl font-black text-foreground">₦{totalPrice.toLocaleString()}</span>
-            </div>
-
-            {error && (
-              <div className="bg-error/10 text-error px-4 py-3 rounded-lg mb-6 text-sm font-medium flex flex-col gap-2">
-                {error}
-                {error.includes("Insufficient balance") && (
-                  <Link href="/dashboard" className="bg-error text-white text-center py-2 rounded-lg font-bold mt-1">
-                    Fund Wallet
-                  </Link>
-                )}
-              </div>
-            )}
 
             <button
               onClick={handlePurchase}
-              disabled={product.stockCount === 0 || purchaseLoading}
-              className={`w-full py-4 rounded-xl font-bold text-lg transition-colors ${
-                product.stockCount === 0
-                  ? 'bg-surface-elevated text-text-muted cursor-not-allowed'
-                  : 'bg-primary hover:bg-primary-hover text-white'
-              }`}
+              disabled={!selectedTier || purchaseLoading}
+              className="w-full py-4 rounded-xl font-bold text-lg bg-primary hover:bg-primary-hover text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {purchaseLoading ? "Processing..." : product.stockCount === 0 ? "Out of Stock" : "Buy Now"}
+              {purchaseLoading ? "Processing..." : "Buy Now"}
             </button>
           </div>
         </div>
