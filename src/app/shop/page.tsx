@@ -130,14 +130,14 @@ function ShopContent() {
                           <h3 className="text-xl font-bold text-foreground group-hover:text-primary transition-colors">{product.name}</h3>
                         </div>
                         
-                        {product.description && (
-                          <p className="text-text-secondary text-sm mb-6 line-clamp-2">{product.description}</p>
+                        {product.info && (
+                          <p className="text-text-secondary text-sm mb-6 line-clamp-2">{product.info}</p>
                         )}
 
                         <div className="space-y-3 mb-8">
                           <p className="text-xs font-bold text-text-muted uppercase tracking-widest mb-4">Select Tier</p>
                           <div className="grid grid-cols-2 gap-3">
-                            {product.pricingTiers.map((tier: any) => (
+                            {product.tiers.map((tier: any) => (
                               <button
                                 key={tier.id}
                                 onClick={() => handleTierSelect(product.id, tier.id)}

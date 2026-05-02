@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 import { getAdminFromRequest } from "@/lib/auth";
 
 export async function PUT(
@@ -7,23 +7,17 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const payload = await getAdminFromRequest(request);
-    if (!payload || !payload.id) {
+    const admin = await getAdminFromRequest(request);
+    if (!admin) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { id } = await params;
-    const { name, icon, description, isActive, sortOrder } = await request.json();
+    const { name } = await request.json();
 
     const category = await prisma.category.update({
       where: { id },
-      data: {
-        name,
-        icon,
-        description,
-        isActive,
-        sortOrder
-      }
+      data: { name }
     });
 
     return NextResponse.json(category, { status: 200 });

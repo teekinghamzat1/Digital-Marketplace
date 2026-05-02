@@ -15,7 +15,7 @@ export default function AdminProducts() {
   const [formData, setFormData] = useState({ 
     name: "", 
     categoryId: "", 
-    description: "", 
+    info: "", 
     isActive: true 
   });
   const [tierFormData, setTierFormData] = useState({
@@ -127,7 +127,7 @@ export default function AdminProducts() {
     setFormData({
       name: prod.name,
       categoryId: prod.categoryId,
-      description: prod.description || "",
+      info: prod.info || "",
       isActive: prod.isActive
     });
     setModalOpen(true);
@@ -140,7 +140,7 @@ export default function AdminProducts() {
         <button 
           onClick={() => { 
             setEditingProduct(null); 
-            setFormData({ name: "", categoryId: categories[0]?.id || "", description: "", isActive: true }); 
+            setFormData({ name: "", categoryId: categories[0]?.id || "", info: "", isActive: true }); 
             setModalOpen(true); 
           }}
           className="flex items-center gap-2 bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-lg font-bold transition-colors"
@@ -174,12 +174,12 @@ export default function AdminProducts() {
                   <td className="px-6 py-4 text-sm text-text-secondary">{prod.category.name}</td>
                   <td className="px-6 py-4">
                     <div className="flex flex-wrap gap-1">
-                      {prod.pricingTiers.map((t: any) => (
+                      {prod.tiers.map((t: any) => (
                         <span key={t.id} className="text-[10px] px-1.5 py-0.5 bg-surface-elevated rounded border border-border-default text-text-muted">
                           {t.label} (₦{Number(t.price).toLocaleString()})
                         </span>
                       ))}
-                      {prod.pricingTiers.length === 0 && <span className="text-xs text-error italic">No tiers</span>}
+                      {prod.tiers.length === 0 && <span className="text-xs text-error italic">No tiers</span>}
                     </div>
                   </td>
                   <td className="px-6 py-4">
@@ -235,8 +235,8 @@ export default function AdminProducts() {
               <div>
                 <label className="block text-sm font-bold mb-1.5">Description</label>
                 <textarea 
-                  value={formData.description} 
-                  onChange={(e) => setFormData({...formData, description: e.target.value})}
+                  value={formData.info} 
+                  onChange={(e) => setFormData({...formData, info: e.target.value})}
                   className="w-full bg-surface-elevated border border-border-default rounded-lg px-4 py-2 text-foreground h-24"
                 />
               </div>
@@ -303,7 +303,7 @@ export default function AdminProducts() {
 
             <div className="space-y-2">
               <h3 className="font-bold text-sm uppercase tracking-widest text-text-muted mb-4">Current Tiers</h3>
-              {activeProduct.pricingTiers.map((tier: any) => (
+              {activeProduct.tiers.map((tier: any) => (
                 <div key={tier.id} className="flex items-center justify-between p-4 bg-surface border border-border-default rounded-xl">
                   <div>
                     <span className="font-bold text-foreground mr-4">Tier {tier.label}</span>
@@ -325,7 +325,7 @@ export default function AdminProducts() {
                   </div>
                 </div>
               ))}
-              {activeProduct.pricingTiers.length === 0 && <p className="text-center text-text-muted italic py-8">No tiers added for this product.</p>}
+              {activeProduct.tiers.length === 0 && <p className="text-center text-text-muted italic py-8">No tiers added for this product.</p>}
             </div>
           </div>
         </div>
