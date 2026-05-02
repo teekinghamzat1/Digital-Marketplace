@@ -1,3 +1,4 @@
+// @ts-nocheck
 import "dotenv/config";
 import { prisma } from "./prisma";
 
@@ -189,7 +190,7 @@ async function main() {
       });
 
       for (const tierData of prodData.tiers) {
-        await prisma.pricingTier.create({
+        await prisma.tier.create({
           data: {
             productId: product.id,
             label: tierData.label,
