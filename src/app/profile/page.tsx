@@ -50,6 +50,100 @@ export default function ProfilePage() {
     }
   };
 
+  const handlePasswordChange = async () => {
+    const { value: formValues } = await Swal.fire({
+      title: "Change Password",
+      html: `
+        <div class="space-y-4 text-left mt-2">
+          <div>
+            <label class="block text-sm font-bold text-text-secondary mb-1">Current Password</label>
+            <input id="current-password" type="password" class="swal2-input !m-0 !w-full !rounded-xl border-border-default focus:border-primary text-sm p-3" placeholder="Enter current password">
+          </div>
+          <div>
+            <label class="block text-sm font-bold text-text-secondary mb-1">New Password</label>
+            <input id="new-password" type="password" class="swal2-input !m-0 !w-full !rounded-xl border-border-default focus:border-primary text-sm p-3" placeholder="Enter new password">
+          </div>
+        </div>
+      `,
+      focusConfirm: false,
+      showCancelButton: true,
+      confirmButtonText: "Update Password",
+      confirmButtonColor: "var(--primary)",
+      background: "var(--surface)",
+      color: "var(--foreground)",
+      customClass: {
+        popup: 'rounded-2xl',
+        confirmButton: 'rounded-xl font-bold',
+        cancelButton: 'rounded-xl font-bold'
+      },
+      preConfirm: () => {
+        const currentPassword = (document.getElementById("current-password") as HTMLInputElement).value;
+        const newPassword = (document.getElementById("new-password") as HTMLInputElement).value;
+        if (!currentPassword || !newPassword) {
+          Swal.showValidationMessage("Please fill in both fields");
+          return false;
+        }
+        if (newPassword.length < 6) {
+          Swal.showValidationMessage("New password must be at least 6 characters");
+          return false;
+        }
+        return { currentPassword, newPassword };
+      }
+    });
+
+    if (formValues) {
+      try {
+        Swal.fire({
+          title: "Updating...",
+          didOpen: () => {
+            Swal.showLoading();
+          },
+          allowOutsideClick: false,
+          background: "var(--surface)",
+          color: "var(--foreground)",
+        });
+
+        const res = await fetch("/api/auth/change-password", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formValues),
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+          Swal.fire({
+            title: "Success",
+            text: "Password updated successfully.",
+            icon: "success",
+            confirmButtonColor: "var(--primary)",
+            background: "var(--surface)",
+            color: "var(--foreground)",
+            customClass: {
+              popup: 'rounded-2xl',
+              confirmButton: 'rounded-xl font-bold'
+            }
+          });
+        } else {
+          Swal.fire({
+            title: "Error",
+            text: data.error || "Failed to update password",
+            icon: "error",
+            confirmButtonColor: "var(--primary)",
+            background: "var(--surface)",
+            color: "var(--foreground)",
+            customClass: {
+              popup: 'rounded-2xl',
+              confirmButton: 'rounded-xl font-bold'
+            }
+          });
+        }
+      } catch (error) {
+        Swal.fire("Error", "A network error occurred.", "error");
+      }
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background pb-24">
@@ -95,7 +189,10 @@ export default function ProfilePage() {
         {/* Account Actions */}
         <h2 className="text-xl font-bold font-[family-name:var(--font-syne)] text-foreground mb-4">Account Actions</h2>
         <div className="space-y-3">
-          <button className="w-full flex items-center justify-between p-4 bg-surface hover:bg-surface-elevated border border-border-default rounded-xl transition-colors">
+          <button 
+            onClick={() => router.push("/dashboard/settings")}
+            className="w-full flex items-center justify-between p-4 bg-surface hover:bg-surface-elevated border border-border-default rounded-xl transition-colors"
+          >
             <div className="flex items-center gap-3">
               <div className="p-2 bg-background rounded-lg text-text-secondary">
                 <Settings size={20} />
@@ -105,7 +202,10 @@ export default function ProfilePage() {
             <span className="text-text-muted">→</span>
           </button>
           
-          <button className="w-full flex items-center justify-between p-4 bg-surface hover:bg-surface-elevated border border-border-default rounded-xl transition-colors">
+          <button 
+            onClick={handlePasswordChange}
+            className="w-full flex items-center justify-between p-4 bg-surface hover:bg-surface-elevated border border-border-default rounded-xl transition-colors"
+          >
             <div className="flex items-center gap-3">
               <div className="p-2 bg-background rounded-lg text-text-secondary">
                 <Shield size={20} />
