@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
+import { useRouter } from "next/navigation";
 import { Navbar } from "@/components/navbar";
 import { Search, ShoppingCart, CheckCircle2, AlertCircle } from "lucide-react";
 import Swal from "sweetalert2";
@@ -11,10 +12,22 @@ function ShopContent() {
   const [loading, setLoading] = useState(true);
   const [selectedTiers, setSelectedTiers] = useState<Record<string, string>>({}); // productId -> tierId
   const [buying, setBuying] = useState<string | null>(null); // productId
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     fetchMarketplace();
+    checkAuth();
   }, []);
+
+  const checkAuth = async () => {
+    try {
+      const res = await fetch("/api/auth/me");
+      setIsLoggedIn(res.ok);
+    } catch (e) {
+      setIsLoggedIn(false);
+    }
+  };
 
   const fetchMarketplace = async () => {
     setLoading(true);
@@ -36,6 +49,11 @@ function ShopContent() {
   const handleBuyNow = async (productId: string) => {
     const tierId = selectedTiers[productId];
     if (!tierId) return;
+
+    if (!isLoggedIn) {
+      router.push("/login");
+      return;
+    }
 
     const result = await Swal.fire({
       title: "Confirm Purchase",
@@ -128,7 +146,14 @@ function ShopContent() {
                     {category.products.map((product: any) => (
                       <div key={product.id} className="vault-card flex flex-col p-8 group border-border-default hover:border-primary/40 transition-all duration-300">
                         <div className="flex justify-between items-start mb-6">
-                          <h3 className="text-xl font-bold text-foreground group-hover:text-primary transition-colors">{product.name}</h3>
+                          <div>
+                            <h3 className="text-xl font-bold text-foreground group-hover:text-primary transition-colors">{product.name}</h3>
+                            {product._count?.items < 10 && product._count?.items > 0 && (
+                              <p className="text-xs text-warning font-bold mt-1 flex items-center gap-1">
+                                <AlertCircle size={12} /> Only {product._count.items} left in stock!
+                              </p>
+                            )}
+                          </div>
                         </div>
                         
                         {product.info && (

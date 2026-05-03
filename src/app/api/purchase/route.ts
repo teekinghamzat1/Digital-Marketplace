@@ -47,15 +47,14 @@ export async function POST(request: NextRequest) {
 
     // Transactional purchase
     const transactionResult = await prisma.$transaction(async (tx) => {
-      // 0. Fetch and reserve inventory
-      const availableItems = await tx.productItem.findMany({
-        where: {
-          productId: productId,
-          isSold: false
-        },
-        take: tier.quantity,
-        orderBy: { createdAt: 'asc' }
-      });
+      // 0. Fetch and reserve inventory with row-level locking
+      const availableItems: any[] = await tx.$queryRaw`
+        SELECT id FROM product_items 
+        WHERE product_id = ${productId}::uuid AND is_sold = false 
+        ORDER BY created_at ASC 
+        LIMIT ${tier.quantity} 
+        FOR UPDATE SKIP LOCKED
+      `;
 
       if (availableItems.length < tier.quantity) {
         throw new Error(`Insufficient stock. Only ${availableItems.length} items left.`);

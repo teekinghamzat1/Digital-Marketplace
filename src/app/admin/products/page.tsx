@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Pencil, Trash2, Package, Layers, Settings2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Package, Layers, Settings2, MinusCircle, AlertTriangle } from "lucide-react";
 import Swal from "sweetalert2";
 
 export default function AdminProducts() {
@@ -159,6 +159,39 @@ export default function AdminProducts() {
     }
   };
 
+  const handleRemoveInventory = async (prod: any) => {
+    const stock = prod._count?.items || 0;
+    if (stock === 0) {
+      Swal.fire("Error", "No unsold stock to remove", "error");
+      return;
+    }
+
+    const { value: amount } = await Swal.fire({
+      title: 'Remove Stock',
+      text: `Enter amount to remove (max: ${stock})`,
+      input: 'number',
+      inputAttributes: { min: "1", max: stock.toString() },
+      showCancelButton: true,
+      confirmButtonText: 'Remove',
+      confirmButtonColor: 'var(--error)'
+    });
+
+    if (amount) {
+      const res = await fetch(`/api/admin/inventory-delete`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productId: prod.id, amount: parseInt(amount) })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        Swal.fire("Success", `Removed ${data.count} items`, "success");
+        fetchProducts();
+      } else {
+        Swal.fire("Error", data.error || "Failed to remove stock", "error");
+      }
+    }
+  };
+
   return (
     <div>
       <div className="flex justify-between items-center mb-8">
@@ -210,7 +243,14 @@ export default function AdminProducts() {
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <span className="font-bold text-foreground">{prod._count?.items || 0}</span>
+                    <div className="flex items-center gap-2">
+                      <span className={`font-bold ${prod._count?.items < 10 && prod._count?.items > 0 ? 'text-warning' : prod._count?.items === 0 ? 'text-error' : 'text-foreground'}`}>
+                        {prod._count?.items || 0}
+                      </span>
+                      {prod._count?.items < 10 && prod._count?.items > 0 && (
+                        <AlertTriangle size={14} className="text-warning" title="Low Stock!" />
+                      )}
+                    </div>
                   </td>
                   <td className="px-6 py-4">
                     <span className={`px-2 py-1 rounded text-xs font-bold ${prod.isActive ? 'bg-success/10 text-success' : 'bg-error/10 text-error'}`}>
@@ -224,6 +264,13 @@ export default function AdminProducts() {
                       title="Upload Inventory"
                     >
                       <Package size={18} />
+                    </button>
+                    <button 
+                      onClick={() => handleRemoveInventory(prod)}
+                      className="text-text-secondary hover:text-error transition-colors p-2" 
+                      title="Remove Unsold Inventory"
+                    >
+                      <MinusCircle size={18} />
                     </button>
                     <button 
                       onClick={() => { setActiveProduct(prod); setTierModalOpen(true); }}
