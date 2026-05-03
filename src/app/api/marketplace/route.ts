@@ -12,6 +12,9 @@ export async function GET(request: NextRequest) {
             tiers: {
               orderBy: { quantity: "asc" },
             },
+            _count: {
+              select: { items: { where: { isSold: false } } }
+            }
           },
         },
       },

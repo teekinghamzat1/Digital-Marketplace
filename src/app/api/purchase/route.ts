@@ -47,6 +47,22 @@ export async function POST(request: NextRequest) {
 
     // Transactional purchase
     const transactionResult = await prisma.$transaction(async (tx) => {
+      // 0. Fetch and reserve inventory
+      const availableItems = await tx.productItem.findMany({
+        where: {
+          productId: productId,
+          isSold: false
+        },
+        take: tier.quantity,
+        orderBy: { createdAt: 'asc' }
+      });
+
+      if (availableItems.length < tier.quantity) {
+        throw new Error(`Insufficient stock. Only ${availableItems.length} items left.`);
+      }
+
+      const itemIds = availableItems.map((item: any) => item.id);
+
       // 1. Deduct balance
       const updatedUser = await tx.user.update({
         where: { id: user.id },
@@ -56,6 +72,10 @@ export async function POST(request: NextRequest) {
           },
         },
       });
+
+      if (Number(updatedUser.walletBalance) < 0) {
+        throw new Error("Insufficient wallet balance");
+      }
 
       // 2. Create sale record
       const sale = await tx.sale.create({
@@ -68,17 +88,30 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      return { sale, updatedBalance: updatedUser.walletBalance };
+      // 3. Mark items as sold and assign to user
+      await tx.productItem.updateMany({
+        where: {
+          id: { in: itemIds }
+        },
+        data: {
+          isSold: true,
+          soldToUserId: user.id,
+          soldAt: new Date()
+        }
+      });
+
+      return { sale, updatedBalance: updatedUser.walletBalance, deliveredItems: availableItems };
     });
 
     return NextResponse.json({
       message: "Purchase successful",
       sale: transactionResult.sale,
       newBalance: transactionResult.updatedBalance,
+      deliveredItems: transactionResult.deliveredItems
     }, { status: 200 });
 
   } catch (error: any) {
     console.error("Purchase error:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: error.message }, { status: error.message.includes('Insufficient') ? 400 : 500 });
   }
 }

@@ -11,6 +11,8 @@ export default function AdminProducts() {
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [tierModalOpen, setTierModalOpen] = useState(false);
+  const [inventoryModalOpen, setInventoryModalOpen] = useState(false);
+  const [inventoryText, setInventoryText] = useState("");
   const [editingProduct, setEditingProduct] = useState<any>(null);
   const [activeProduct, setActiveProduct] = useState<any>(null);
   const [formData, setFormData] = useState({ 
@@ -134,6 +136,29 @@ export default function AdminProducts() {
     setModalOpen(true);
   };
 
+  const handleInventorySubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const res = await fetch("/api/admin/inventory-upload", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({
+        productId: activeProduct.id,
+        bulk_data: inventoryText
+      })
+    });
+
+    const data = await res.json();
+    if (res.ok) {
+      setInventoryText("");
+      setInventoryModalOpen(false);
+      Swal.fire("Success", `Successfully uploaded ${data.count} items`, "success");
+      fetchProducts();
+    } else {
+      Swal.fire("Error", data.error || "Failed to upload", "error");
+    }
+  };
+
   return (
     <div>
       <div className="flex justify-between items-center mb-8">
@@ -162,6 +187,7 @@ export default function AdminProducts() {
                 <th className="px-6 py-4 text-xs font-bold text-text-muted uppercase tracking-wider">Product</th>
                 <th className="px-6 py-4 text-xs font-bold text-text-muted uppercase tracking-wider">Category</th>
                 <th className="px-6 py-4 text-xs font-bold text-text-muted uppercase tracking-wider">Tiers</th>
+                <th className="px-6 py-4 text-xs font-bold text-text-muted uppercase tracking-wider">Stock</th>
                 <th className="px-6 py-4 text-xs font-bold text-text-muted uppercase tracking-wider">Status</th>
                 <th className="px-6 py-4 text-xs font-bold text-text-muted uppercase tracking-wider text-right">Actions</th>
               </tr>
@@ -184,11 +210,21 @@ export default function AdminProducts() {
                     </div>
                   </td>
                   <td className="px-6 py-4">
+                    <span className="font-bold text-foreground">{prod._count?.items || 0}</span>
+                  </td>
+                  <td className="px-6 py-4">
                     <span className={`px-2 py-1 rounded text-xs font-bold ${prod.isActive ? 'bg-success/10 text-success' : 'bg-error/10 text-error'}`}>
                       {prod.isActive ? 'Active' : 'Inactive'}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-right space-x-2">
+                    <button 
+                      onClick={() => { setActiveProduct(prod); setInventoryModalOpen(true); setInventoryText(""); }}
+                      className="text-text-secondary hover:text-primary transition-colors p-2" 
+                      title="Upload Inventory"
+                    >
+                      <Package size={18} />
+                    </button>
                     <button 
                       onClick={() => { setActiveProduct(prod); setTierModalOpen(true); }}
                       className="text-text-secondary hover:text-primary transition-colors p-2" 
@@ -328,6 +364,46 @@ export default function AdminProducts() {
               ))}
               {activeProduct.tiers.length === 0 && <p className="text-center text-text-muted italic py-8">No tiers added for this product.</p>}
             </div>
+          </div>
+        </div>
+      )}
+      {/* Inventory Modal */}
+      {inventoryModalOpen && activeProduct && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+          <div className="vault-card w-full max-w-xl p-8">
+            <h2 className="text-2xl font-bold mb-2 font-[family-name:var(--font-syne)]">Upload Inventory</h2>
+            <p className="text-text-secondary text-sm mb-6">Uploading to: <strong className="text-foreground">{activeProduct.name}</strong></p>
+            
+            <form onSubmit={handleInventorySubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-bold mb-1.5 text-text-muted">
+                  Paste Credentials (One per line)
+                </label>
+                <textarea 
+                  value={inventoryText} 
+                  onChange={(e) => setInventoryText(e.target.value)}
+                  placeholder="email:password&#10;username:password"
+                  className="w-full bg-surface-elevated border border-border-default rounded-lg px-4 py-3 text-foreground font-mono text-sm h-64 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+                  required
+                />
+              </div>
+              
+              <div className="flex gap-4 pt-4">
+                <button 
+                  type="button" 
+                  onClick={() => setInventoryModalOpen(false)} 
+                  className="flex-1 px-4 py-3 rounded-xl border border-border-default font-bold hover:bg-surface-elevated transition-colors"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  className="flex-1 px-4 py-3 rounded-xl bg-primary hover:bg-primary-hover text-white font-bold transition-transform hover:scale-105"
+                >
+                  Upload Items
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

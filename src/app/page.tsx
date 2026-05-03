@@ -14,14 +14,26 @@ async function getStats() {
 }
 
 async function getCategories() {
-  return await prisma.category.findMany({
+  const categories = await prisma.category.findMany({
     orderBy: { name: 'asc' },
     include: {
-      _count: {
-        select: { products: { where: { isActive: true } } }
+      products: {
+        where: { isActive: true },
+        include: {
+          _count: {
+            select: { items: { where: { isSold: false } } }
+          }
+        }
       }
     }
   });
+
+  return categories.map(cat => ({
+    ...cat,
+    _count: {
+      items: cat.products.reduce((sum: number, p: any) => sum + p._count.items, 0)
+    }
+  }));
 }
 
 export default async function Home() {
@@ -97,7 +109,7 @@ export default async function Home() {
                 <div className="flex-1">
                   <h3 className="text-xl font-bold text-foreground mb-1">{category.name}</h3>
                   <div className="text-xs font-bold text-primary bg-primary/10 inline-block px-2 py-1 rounded">
-                    {category._count.products} Products Available
+                    {category._count.items} Available
                   </div>
                 </div>
               </Link>

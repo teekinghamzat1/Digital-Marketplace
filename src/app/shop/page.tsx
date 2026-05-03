@@ -138,24 +138,28 @@ function ShopContent() {
                         <div className="space-y-3 mb-8">
                           <p className="text-xs font-bold text-text-muted uppercase tracking-widest mb-4">Select Tier</p>
                           <div className="grid grid-cols-2 gap-3">
-                            {product.tiers.map((tier: any) => (
+                            {product.tiers.map((tier: any) => {
+                              const isAvailable = product._count?.items >= tier.quantity;
+                              return (
                               <button
                                 key={tier.id}
+                                disabled={!isAvailable}
                                 onClick={() => handleTierSelect(product.id, tier.id)}
                                 className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all ${
+                                  !isAvailable ? "opacity-50 cursor-not-allowed bg-surface border-border-default" :
                                   selectedTiers[product.id] === tier.id
                                     ? "border-primary bg-primary/5 shadow-md shadow-primary/10"
                                     : "border-border-default bg-surface hover:border-text-muted"
                                 }`}
                               >
-                                <span className={`text-sm font-bold ${selectedTiers[product.id] === tier.id ? 'text-primary' : 'text-text-secondary'}`}>
+                                <span className={`text-sm font-bold ${!isAvailable ? 'text-text-muted' : selectedTiers[product.id] === tier.id ? 'text-primary' : 'text-text-secondary'}`}>
                                   {tier.label} {tier.quantity > 1 ? 'Units' : 'Unit'}
                                 </span>
-                                <span className={`text-xs font-black ${selectedTiers[product.id] === tier.id ? 'text-primary' : 'text-foreground'}`}>
-                                  ₦{Number(tier.price).toLocaleString()}
+                                <span className={`text-xs font-black ${!isAvailable ? 'text-text-muted' : selectedTiers[product.id] === tier.id ? 'text-primary' : 'text-foreground'}`}>
+                                  {isAvailable ? `₦${Number(tier.price).toLocaleString()}` : "Out of Stock"}
                                 </span>
                               </button>
-                            ))}
+                            )})}
                           </div>
                         </div>
 

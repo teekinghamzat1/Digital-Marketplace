@@ -7,8 +7,13 @@ export async function GET() {
     const categories = await prisma.category.findMany({
       orderBy: { name: 'asc' },
       include: {
-        _count: {
-          select: { products: { where: { isActive: true } } }
+        products: {
+          where: { isActive: true },
+          include: {
+            _count: {
+              select: { items: { where: { isSold: false } } }
+            }
+          }
         }
       }
     });
@@ -16,7 +21,7 @@ export async function GET() {
     const formattedCategories = categories.map(cat => ({
       id: cat.id,
       name: cat.name,
-      productCount: cat._count.products
+      availableItemsCount: cat.products.reduce((sum: number, p: any) => sum + p._count.items, 0)
     }));
 
     return NextResponse.json(formattedCategories, { status: 200 });

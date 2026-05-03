@@ -15,6 +15,9 @@ export async function GET(request: NextRequest) {
       include: {
         category: { select: { name: true } },
         tiers: true,
+        _count: {
+          select: { items: { where: { isSold: false } } }
+        }
       }
     });
     return NextResponse.json(products, { status: 200 });
