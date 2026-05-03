@@ -1,10 +1,9 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import bcrypt from "bcrypt";
 import * as jose from "jose";
 
-const prisma = new PrismaClient();
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || "fallback-secret");
 
 export async function POST(req: Request) {
@@ -15,7 +14,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Current and new password are required" }, { status: 400 });
     }
 
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const sessionId = cookieStore.get("sessionId")?.value;
 
     if (!sessionId) {
