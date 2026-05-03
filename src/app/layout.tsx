@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Syne, DM_Sans } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
+import { MobileFooterNav } from "@/components/mobile-footer-nav";
 
 const syne = Syne({
   variable: "--font-syne",
@@ -37,6 +38,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           {children}
+          <MobileFooterNav />
         </ThemeProvider>
       </body>
     </html>
