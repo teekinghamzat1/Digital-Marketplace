@@ -37,10 +37,10 @@ export function Navbar() {
 
           <div className="flex items-center gap-3">
             {user ? (
-              <div className="flex items-center gap-3">
-                <div className="hidden md:flex flex-col items-end mr-2">
-                  <span className="text-[10px] text-text-muted font-bold uppercase tracking-widest">Balance</span>
-                  <span className="text-sm font-black text-primary">₦{Number(user.walletBalance).toLocaleString()}</span>
+              <div className="flex items-center gap-4">
+                <div className="hidden md:flex items-center px-3 py-1.5 bg-surface-elevated rounded-full border border-border-default">
+                  <span className="text-sm font-medium text-text-secondary mr-1.5">Balance:</span>
+                  <span className="text-sm font-bold text-foreground">₦{Number(user.walletBalance).toLocaleString()}</span>
                 </div>
                 <Link href="/dashboard" className="flex items-center gap-2 bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-lg font-medium transition-colors shadow-lg shadow-primary/20">
                   <span className="hidden sm:inline">Dashboard</span>

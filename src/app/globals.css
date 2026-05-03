@@ -59,10 +59,22 @@
     background-color: var(--bg-default);
     color: var(--text-primary);
     font-family: var(--font-dm-sans), sans-serif;
+    animation: fadeIn 0.5s ease-out forwards;
   }
 
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-syne), sans-serif;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(5px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 }
 
