@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { Navbar } from "@/components/navbar";
+import { Footer } from "@/components/footer";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { cookies } from "next/headers";
@@ -214,9 +215,7 @@ export default async function Home() {
         </section>
       </main>
 
-      <footer className="border-t border-border-default bg-background py-12 text-center text-text-muted">
-        <p>© {new Date().getFullYear()} Sumon Mondal Logs Marketplace. All rights reserved.</p>
-      </footer>
+      <Footer />
     </div>
   );
 }

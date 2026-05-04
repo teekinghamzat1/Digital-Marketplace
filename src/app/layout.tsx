@@ -3,6 +3,7 @@ import { Syne, DM_Sans } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { MobileFooterNav } from "@/components/mobile-footer-nav";
+import { WhatsAppButton } from "@/components/whatsapp-button";
 
 const syne = Syne({
   variable: "--font-syne",
@@ -38,6 +39,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           {children}
+          <WhatsAppButton />
           <MobileFooterNav />
         </ThemeProvider>
       </body>
