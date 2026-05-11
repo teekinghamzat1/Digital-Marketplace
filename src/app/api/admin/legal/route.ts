@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
   try {
-    const admin = await getAdminFromRequest(req);
+    const admin = await getAdminFromRequest();
     if (!admin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const pages = await prisma.legalPage.findMany({
@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const admin = await getAdminFromRequest(req);
+    const admin = await getAdminFromRequest();
     if (!admin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const { id, slug, title, content } = await req.json();
@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
-    const admin = await getAdminFromRequest(req);
+    const admin = await getAdminFromRequest();
     if (!admin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const { searchParams } = new URL(req.url);

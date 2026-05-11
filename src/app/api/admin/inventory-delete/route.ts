@@ -5,7 +5,7 @@ import { getAdminFromRequest } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
   try {
-    const admin = await getAdminFromRequest(req);
+    const admin = await getAdminFromRequest();
     if (!admin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const { productId, amount } = await req.json();
