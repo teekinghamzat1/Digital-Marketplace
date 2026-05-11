@@ -2,10 +2,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAdminFromRequest } from "@/lib/auth";
+import { logAction } from "@/lib/audit";
 
 export async function GET(request: NextRequest) {
   try {
-    const admin = await getAdminFromRequest(request);
+    const admin = await getAdminFromRequest();
     if (!admin) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -28,7 +29,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const admin = await getAdminFromRequest(request);
+    const admin = await getAdminFromRequest();
     if (!admin) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -48,8 +49,18 @@ export async function POST(request: NextRequest) {
       }
     });
 
+    await logAction({
+      adminId: admin.id,
+      action: "CREATE_PRODUCT",
+      entity: "PRODUCT",
+      entityId: product.id,
+      details: { name, categoryId },
+      ipAddress: request.headers.get("x-forwarded-for") || undefined,
+    });
+
     return NextResponse.json(product, { status: 201 });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("Create product error:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

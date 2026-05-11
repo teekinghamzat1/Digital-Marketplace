@@ -1,97 +1,101 @@
-// @ts-nocheck
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/auth";
+import { PurchaseSchema } from "@/lib/validations";
+import { purchaseLimiter, checkRateLimit } from "@/lib/ratelimit";
+import { getUserWalletBalance } from "@/lib/wallet";
+import { logAction } from "@/lib/audit";
+import { logger } from "@/lib/logger";
+import { sanitizeInput } from "@/lib/sanitize";
+import crypto from "crypto";
 
+/**
+ * PRODUCTION PURCHASE HANDLER
+ * Enforces:
+ * 1. User Authentication
+ * 2. Redis-based Rate Limiting
+ * 3. PostgreSQL Row-Level Locking (SELECT FOR UPDATE)
+ * 4. Financial Integrity (Transaction History Balance)
+ * 5. Atomic Purchase & Assignment
+ */
 export async function POST(request: NextRequest) {
   try {
-    const user = await getUserFromRequest(request);
+    // 1. Authentication
+    const user = await getUserFromRequest();
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Authentication required" }, { status: 401 });
     }
 
-    const { productId, tierId } = await request.json();
-
-    if (!productId || !tierId) {
-      return NextResponse.json({ error: "Missing product or tier selection" }, { status: 400 });
+    // 2. Rate Limiting (Domain 7)
+    const { success, retryAfter } = await checkRateLimit(purchaseLimiter, user.id);
+    if (!success) {
+      return NextResponse.json({ 
+        error: "Too many purchase attempts. Please wait.", 
+        retryAfter 
+      }, { status: 429 });
     }
 
-    // Fetch product and tier
-    const tier = await prisma.tier.findFirst({
-      where: {
-        id: tierId,
-        productId: productId,
-      },
-      include: {
-        product: true,
-      },
-    });
-
-    if (!tier) {
-      return NextResponse.json({ error: "Invalid product or tier selection" }, { status: 404 });
+    // 3. Sanitization & Validation (Domain 6)
+    const rawBody = await request.json();
+    const sanitizedBody = sanitizeInput(rawBody);
+    const validation = PurchaseSchema.safeParse(sanitizedBody);
+    
+    if (!validation.success) {
+      return NextResponse.json({ error: "Invalid request parameters" }, { status: 400 });
     }
 
-    // Check balance
-    const freshUser = await prisma.user.findUnique({
-      where: { id: user.id },
-      select: { walletBalance: true },
-    });
+    const { productId, tierId } = validation.data;
 
-    if (!freshUser) {
-       return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
-
-    if (Number(freshUser.walletBalance) < Number(tier.price)) {
-      return NextResponse.json({ error: "Insufficient wallet balance" }, { status: 400 });
-    }
-
-    // Transactional purchase
-    const transactionResult = await prisma.$transaction(async (tx) => {
-      // 0. Fetch and reserve inventory with row-level locking
+    // 4. ATOMIC TRANSACTION (Domain 3 & 5)
+    const result = await prisma.$transaction(async (tx) => {
+      
+      // A. Row Lock & Inventory Check (Anti-double-sale)
+      // SKIP LOCKED prevents multiple users from waiting on the same item, they move to the next or fail instantly
       const availableItems: any[] = await tx.$queryRaw`
         SELECT id FROM product_items 
         WHERE product_id = ${productId}::uuid AND is_sold = false 
-        ORDER BY created_at ASC 
-        LIMIT ${tier.quantity} 
-        FOR UPDATE SKIP LOCKED
+        LIMIT 1 FOR UPDATE SKIP LOCKED
       `;
 
-      if (availableItems.length < tier.quantity) {
-        throw new Error(`Insufficient stock. Only ${availableItems.length} items left.`);
+      if (availableItems.length === 0) {
+        throw new Error("OUT_OF_STOCK");
       }
 
-      const itemIds = availableItems.map((item: any) => item.id);
+      const itemId = availableItems[0].id;
 
-      // 1. Deduct balance
-      const updatedUser = await tx.user.update({
-        where: { id: user.id },
-        data: {
-          walletBalance: {
-            decrement: tier.price,
-          },
-        },
+      // B. Backend Price Source (Domain 14)
+      const tier = await tx.tier.findUnique({
+        where: { id: tierId },
+        include: { product: true }
       });
 
-      if (Number(updatedUser.walletBalance) < 0) {
-        throw new Error("Insufficient wallet balance");
+      if (!tier || tier.productId !== productId) {
+        throw new Error("INVALID_PRODUCT_SELECTION");
       }
 
-      // 2. Create sale record
-      const sale = await tx.sale.create({
+      // C. Financial Integrity Check (Domain 3)
+      // Never trust a single 'balance' column. Sum the history.
+      const realBalance = await getUserWalletBalance(user.id);
+      const price = Number(tier.price);
+
+      if (realBalance < price) {
+        throw new Error("INSUFFICIENT_FUNDS");
+      }
+
+      // D. Atomic Debit & Assignment
+      const debitTransaction = await tx.walletTransaction.create({
         data: {
           userId: user.id,
-          productId: productId,
-          tierId: tierId,
-          amount: tier.price,
+          type: "debit",
+          amount: price,
+          reference: `PURCH-${crypto.randomUUID()}`,
           status: "successful",
-        },
+          description: `Purchase of ${tier.product.name} (${tier.label})`
+        }
       });
 
-      // 3. Mark items as sold and assign to user
-      await tx.productItem.updateMany({
-        where: {
-          id: { in: itemIds }
-        },
+      const updatedItem = await tx.productItem.update({
+        where: { id: itemId },
         data: {
           isSold: true,
           soldToUserId: user.id,
@@ -99,18 +103,37 @@ export async function POST(request: NextRequest) {
         }
       });
 
-      return { sale, updatedBalance: updatedUser.walletBalance, deliveredItems: availableItems };
+      return { item: updatedItem, transactionId: debitTransaction.id };
     });
+
+    // 5. Audit Logging (Domain 10)
+    await logAction({
+      userId: user.id,
+      action: "PURCHASE_SUCCESS",
+      entity: "PRODUCT",
+      entityId: productId,
+      details: { itemId: result.item.id, transactionId: result.transactionId },
+      ipAddress: request.headers.get("x-forwarded-for") || undefined
+    });
+
+    logger.info({ userId: user.id, productId }, "Purchase completed successfully");
 
     return NextResponse.json({
       message: "Purchase successful",
-      sale: transactionResult.sale,
-      newBalance: transactionResult.updatedBalance,
-      deliveredItems: transactionResult.deliveredItems
+      item: { id: result.item.id }
     }, { status: 200 });
 
   } catch (error: any) {
-    console.error("Purchase error:", error);
-    return NextResponse.json({ error: error.message }, { status: error.message.includes('Insufficient') ? 400 : 500 });
+    logger.warn({ error: error.message }, "Purchase failed");
+    
+    const errorMap: Record<string, number> = {
+      "OUT_OF_STOCK": 409,
+      "INSUFFICIENT_FUNDS": 402,
+      "INVALID_PRODUCT_SELECTION": 400
+    };
+
+    return NextResponse.json({ 
+      error: errorMap[error.message] ? error.message : "Internal purchase error" 
+    }, { status: errorMap[error.message] || 500 });
   }
 }

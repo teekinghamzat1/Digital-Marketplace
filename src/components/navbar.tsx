@@ -13,16 +13,21 @@ export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
 
+  const [settings, setSettings] = useState<any>(null);
+
   useEffect(() => {
     setMounted(true);
+    
+    // Fetch user
     fetch("/api/auth/me", { method: "GET", credentials: "include" })
-      .then(res => {
-        if (res.ok) return res.json();
-        return null;
-      })
-      .then(data => {
-        if (data && data.id) setUser(data);
-      })
+      .then(res => res.ok ? res.json() : null)
+      .then(data => data?.id && setUser(data))
+      .catch(() => { });
+
+    // Fetch site settings
+    fetch("/api/settings")
+      .then(res => res.json())
+      .then(data => setSettings(data))
       .catch(() => { });
   }, []);
 
@@ -50,10 +55,14 @@ export function Navbar() {
       <nav className="w-full border-b border-border-default bg-surface/80 backdrop-blur-md sticky top-0 z-[100] transition-all duration-300">
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
           <Link href="/" className="text-xl font-bold font-syne text-primary flex items-center gap-2">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white">
-              <ShoppingBag size={18} />
-            </div>
-            <span>Sumon Mondal Logs</span>
+            {settings?.siteLogo ? (
+              <img src={settings.siteLogo} alt={settings.siteName} className="h-8 w-auto object-contain" />
+            ) : (
+              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white">
+                <ShoppingBag size={18} />
+              </div>
+            )}
+            <span>{settings?.siteName || "Sumon Mondal Logs"}</span>
           </Link>
 
           {/* Desktop View */}

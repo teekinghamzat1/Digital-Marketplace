@@ -1,14 +1,13 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { deleteSession } from "@/lib/auth";
+import { cookies } from "next/headers";
 
-export async function POST(request: NextRequest) {
-  const sessionId = request.cookies.get("admin_session")?.value;
+export async function POST() {
+  const cookieStore = await cookies();
+  const sessionId = cookieStore.get("admin_session")?.value;
   if (sessionId) await deleteSession(sessionId);
 
   const response = NextResponse.json({ message: "Logged out" });
-  response.headers.set(
-    "Set-Cookie",
-    "admin_session=; Path=/; HttpOnly; Max-Age=0"
-  );
+  response.cookies.delete("admin_session");
   return response;
 }

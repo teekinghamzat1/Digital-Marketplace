@@ -4,8 +4,17 @@ import React from "react";
 import { MessageCircle } from "lucide-react";
 
 export function WhatsAppButton() {
-  const whatsappNumber = "+8801313839290"; // Replace with actual admin number
-  const message = "Hello, I have a question about Sumon Mondal Marketplace.";
+  const [whatsappNumber, setWhatsappNumber] = React.useState("+8801313839290");
+  const message = "Hello, I have a question about the Marketplace.";
+
+  React.useEffect(() => {
+    fetch("/api/settings")
+      .then(res => res.json())
+      .then(data => {
+        if (data.whatsapp) setWhatsappNumber(data.whatsapp);
+      })
+      .catch(() => {});
+  }, []);
 
   const handleClick = () => {
     const url = `https://wa.me/${whatsappNumber.replace(/\+/g, "")}?text=${encodeURIComponent(message)}`;

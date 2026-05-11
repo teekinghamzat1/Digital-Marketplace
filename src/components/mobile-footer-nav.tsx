@@ -1,12 +1,14 @@
 "use client";
 
 import React from 'react';
-import { Home, ShoppingBag, ShoppingCart, Wallet, User } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
+import { Home, ShoppingBag, ShoppingCart, Wallet, User } from 'lucide-react';
+import { useUser } from '@/context/UserContext';
 
 export function MobileFooterNav() {
   const pathname = usePathname();
   const router = useRouter();
+  const { user, loading } = useUser();
 
   // Dynamic menu config matching actual available pages
   const navItems = [
@@ -20,8 +22,8 @@ export function MobileFooterNav() {
   // Derive active tab from current route purely, avoiding local state flickering
   const activeTab = navItems.find(item => item.match(pathname))?.id || '';
 
-  // Hide on auth pages
-  if (pathname === '/login' || pathname === '/register') return null;
+  // Hide for non-authenticated users OR on auth pages
+  if (loading || !user || pathname === '/login' || pathname === '/register') return null;
 
   const handleTabClick = (href: string) => {
     router.push(href);

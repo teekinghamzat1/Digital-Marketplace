@@ -1,15 +1,23 @@
 import { prisma } from "@/lib/prisma";
-import { NextRequest } from "next/server";
+import { cookies } from "next/headers";
 import crypto from "crypto";
 
-const SESSION_DURATION = 60 * 60 * 24 * 7; // 7 days in seconds
+const SESSION_DURATION = 1800; // 30 minutes in seconds (Inactivity timeout)
+
+export async function setSessionCookie(name: string, value: string) {
+  const cookieStore = await cookies();
+  cookieStore.set(name, value, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+    path: "/",
+    maxAge: SESSION_DURATION,
+  });
+}
 
 // Create a new user session
 export async function createUserSession(userId: string): Promise<string> {
   const sessionId = crypto.randomUUID();
-  if (!prisma.session) {
-    throw new Error("Prisma Session model not initialized. Please restart the dev server.");
-  }
   await prisma.session.create({
     data: {
       id: sessionId,
@@ -34,8 +42,9 @@ export async function createAdminSession(adminId: string): Promise<string> {
 }
 
 // Get user from request cookie
-export async function getUserFromRequest(request: NextRequest) {
-  const sessionId = request.cookies.get("user_session")?.value;
+export async function getUserFromRequest() {
+  const cookieStore = await cookies();
+  const sessionId = cookieStore.get("user_session")?.value;
   if (!sessionId) return null;
   const session = await prisma.session.findFirst({
     where: {
@@ -49,8 +58,9 @@ export async function getUserFromRequest(request: NextRequest) {
 }
 
 // Get admin from request cookie
-export async function getAdminFromRequest(request: NextRequest) {
-  const sessionId = request.cookies.get("admin_session")?.value;
+export async function getAdminFromRequest() {
+  const cookieStore = await cookies();
+  const sessionId = cookieStore.get("admin_session")?.value;
   if (!sessionId) return null;
   const session = await prisma.session.findFirst({
     where: {

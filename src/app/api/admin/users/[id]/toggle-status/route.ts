@@ -7,7 +7,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const payload = await getAdminFromRequest(request);
+    const payload = await getAdminFromRequest();
     if (!payload || !payload.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

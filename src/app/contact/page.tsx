@@ -1,15 +1,54 @@
-"use client";
-
-import React from "react";
-import { Navbar } from "@/components/navbar";
-import { Footer } from "@/components/footer";
-import { Mail, MessageCircle, Clock, MapPin, Send } from "lucide-react";
+import { useState } from "react";
+import Swal from "sweetalert2";
 
 export default function ContactPage() {
-  const handleSubmit = (e: React.FormEvent) => {
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    subject: "",
+    message: "",
+  });
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Logic for form submission could go here
-    alert("Thank you for your message! We will get back to you soon.");
+    setLoading(true);
+
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        Swal.fire({
+          title: "Message Sent!",
+          text: "We have received your message and will get back to you soon.",
+          icon: "success",
+          confirmButtonColor: "#f97316",
+        });
+        setFormData({ name: "", email: "", subject: "", message: "" });
+      } else {
+        throw new Error(data.error || "Failed to send message");
+      }
+    } catch (error: any) {
+      Swal.fire({
+        title: "Error",
+        text: error.message,
+        icon: "error",
+        confirmButtonColor: "#f97316",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   return (
@@ -95,6 +134,9 @@ export default function ContactPage() {
                   <label className="block text-sm font-bold text-foreground mb-2">Your Name</label>
                   <input
                     type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
                     required
                     placeholder="John Doe"
                     className="w-full bg-background border border-border-default rounded-xl px-4 py-3 focus:border-primary outline-none transition-colors"
@@ -104,6 +146,9 @@ export default function ContactPage() {
                   <label className="block text-sm font-bold text-foreground mb-2">Email Address</label>
                   <input
                     type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
                     required
                     placeholder="john@example.com"
                     className="w-full bg-background border border-border-default rounded-xl px-4 py-3 focus:border-primary outline-none transition-colors"
@@ -115,6 +160,9 @@ export default function ContactPage() {
                 <label className="block text-sm font-bold text-foreground mb-2">Subject</label>
                 <input
                   type="text"
+                  name="subject"
+                  value={formData.subject}
+                  onChange={handleChange}
                   required
                   placeholder="Inquiry about product"
                   className="w-full bg-background border border-border-default rounded-xl px-4 py-3 focus:border-primary outline-none transition-colors"
@@ -124,6 +172,9 @@ export default function ContactPage() {
               <div>
                 <label className="block text-sm font-bold text-foreground mb-2">Message</label>
                 <textarea
+                  name="message"
+                  value={formData.message}
+                  onChange={handleChange}
                   required
                   rows={5}
                   placeholder="Tell us how we can help..."
@@ -133,10 +184,17 @@ export default function ContactPage() {
 
               <button
                 type="submit"
-                className="w-full bg-primary hover:bg-primary-hover text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98]"
+                disabled={loading}
+                className="w-full bg-primary hover:bg-primary-hover text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
               >
-                <Send size={20} />
-                Send Message
+                {loading ? (
+                  "Sending..."
+                ) : (
+                  <>
+                    <Send size={20} />
+                    Send Message
+                  </>
+                )}
               </button>
             </form>
           </div>

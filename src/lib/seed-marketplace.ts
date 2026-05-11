@@ -189,17 +189,83 @@ async function main() {
         },
       });
 
-      for (const tierData of prodData.tiers) {
+      for (const [index, tierData] of prodData.tiers.entries()) {
+        let badgeText = null;
+        let highlightType = null;
+        let savingsText = null;
+
+        // Add some sample highlights
+        if (index === 1) {
+          badgeText = "Most Popular";
+          highlightType = "most_purchased";
+        } else if (index === 2) {
+          badgeText = "Best Value";
+          highlightType = "best_value";
+          savingsText = "Save 15%";
+        } else if (index === 3) {
+          badgeText = "Hot Deal";
+          highlightType = "hottest";
+          savingsText = "Better deal than smaller package";
+        }
+
         await prisma.tier.create({
           data: {
             productId: product.id,
             label: tierData.label,
             quantity: tierData.quantity,
             price: tierData.price,
+            badgeText,
+            highlightType,
+            savingsText,
           },
         });
       }
     }
+  }
+
+  // Seed default settings
+  console.log("Seeding default site settings...");
+  const defaultSettings = [
+    { key: "siteName", value: "Sumon Digital" },
+    { key: "siteLogo", value: "/logo.png" },
+    { key: "primaryColor", value: "#f97316" },
+    { key: "secondaryColor", value: "#fb923c" },
+    { key: "footerContact", value: "Digital Plaza, 4th Floor, Tech City" },
+    { key: "email", value: "contact@sumondigital.com" },
+    { key: "whatsapp", value: "+1234567890" },
+    { key: "telegram", value: "https://t.me/sumondigital" },
+    { key: "footerCopyright", value: "© 2026 Sumon Digital. All rights reserved." },
+  ];
+
+  for (const setting of defaultSettings) {
+    await prisma.siteSetting.upsert({
+      where: { key: setting.key },
+      update: { value: setting.value },
+      create: { key: setting.key, value: setting.value },
+    });
+  }
+
+  // Seed legal pages
+  console.log("Seeding default legal pages...");
+  const legalPages = [
+    {
+      slug: "privacy-policy",
+      title: "Privacy Policy",
+      content: "<h1>Privacy Policy</h1><p>Your privacy is important to us. This policy explains how we handle your data.</p>",
+    },
+    {
+      slug: "terms-and-conditions",
+      title: "Terms and Conditions",
+      content: "<h1>Terms and Conditions</h1><p>By using our service, you agree to these terms.</p>",
+    },
+  ];
+
+  for (const page of legalPages) {
+    await prisma.legalPage.upsert({
+      where: { slug: page.slug },
+      update: { title: page.title, content: page.content },
+      create: page,
+    });
   }
 
   console.log("Seeding completed successfully.");

@@ -4,7 +4,7 @@ import { getUserFromRequest } from "@/lib/auth";
 
 export async function GET(request: NextRequest) {
   try {
-    const payload = await getUserFromRequest(request);
+    const payload = await getUserFromRequest();
     if (!payload || !payload.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
