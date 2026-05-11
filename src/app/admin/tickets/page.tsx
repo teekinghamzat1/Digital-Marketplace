@@ -1,3 +1,4 @@
+"use client";
 import { useState, useEffect } from "react";
 import { AlertCircle, CheckCircle, Clock, ExternalLink, MessageSquare, ShoppingCart, Trash2, ChevronRight } from "lucide-react";
 import Link from "next/link";

@@ -1,3 +1,4 @@
+"use client";
 import { useEffect, useState } from "react";
 import { Gavel } from "lucide-react";
 import { Navbar } from "@/components/navbar";
