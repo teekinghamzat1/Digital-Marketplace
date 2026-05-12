@@ -6,22 +6,14 @@ import { logger } from "@/lib/logger";
  * This is the source of truth for financial logic.
  */
 export async function getUserWalletBalance(userId: string): Promise<number> {
-  const transactions = await prisma.walletTransaction.findMany({
-    where: { 
-      userId,
-      status: "successful"
-    },
-    select: {
-      type: true,
-      amount: true
-    }
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { walletBalance: true }
   });
 
-  const balance = transactions.reduce((acc, tx) => {
-    const amount = Number(tx.amount);
-    return tx.type === "credit" ? acc + amount : acc - amount;
-  }, 0);
-
-  logger.debug({ userId, balance }, "Calculated wallet balance from transaction history");
+  if (!user) return 0;
+  
+  const balance = Number(user.walletBalance);
+  logger.debug({ userId, balance }, "Fetched wallet balance from user record");
   return balance;
 }
