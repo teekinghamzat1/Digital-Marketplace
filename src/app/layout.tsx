@@ -4,6 +4,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { MobileFooterNav } from "@/components/mobile-footer-nav";
 import { WhatsAppButton } from "@/components/whatsapp-button";
+import { BrandThemeHandler } from "@/components/brand-theme-handler";
 import { UserProvider } from "@/context/UserContext";
 import { getSettings } from "@/lib/settings";
 
@@ -51,23 +52,20 @@ export default async function RootLayout({
       className={`${syne.variable} ${dmSans.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <head>
-        <style dangerouslySetInnerHTML={{ __html: `
-          :root {
-            --color-primary: ${settings.primaryColor};
-            --color-primary-hover: ${settings.primaryColor}dd;
-            --color-secondary: ${settings.secondaryColor};
-          }
-        `}} />
-      </head>
+      <head />
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
         <ThemeProvider
           attribute="data-theme"
           defaultTheme="light"
           enableSystem
+          enableColorScheme={false}
           disableTransitionOnChange
         >
           <UserProvider>
+            <BrandThemeHandler 
+              primaryColor={settings.primaryColor} 
+              secondaryColor={settings.secondaryColor} 
+            />
             {children}
             <WhatsAppButton />
             <MobileFooterNav />

@@ -12,8 +12,6 @@ export function WhatsAppButton() {
 
   useEffect(() => setMounted(true), []);
 
-  if (!mounted || pathname.startsWith("/admin")) return null;
-
   React.useEffect(() => {
     fetch("/api/settings")
       .then(res => res.json())
@@ -22,6 +20,8 @@ export function WhatsAppButton() {
       })
       .catch(() => {});
   }, []);
+
+  if (!mounted || pathname.startsWith("/admin")) return null;
 
   const handleClick = () => {
     const url = `https://wa.me/${whatsappNumber.replace(/\+/g, "")}?text=${encodeURIComponent(message)}`;
