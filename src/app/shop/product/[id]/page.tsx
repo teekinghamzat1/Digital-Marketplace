@@ -6,6 +6,7 @@ import { Navbar } from "@/components/navbar";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ShieldCheck, Zap } from "lucide-react";
 import Link from "next/link";
+import { OrderSuccessModal } from "@/components/order-success-modal";
 
 export default function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -15,6 +16,10 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [purchaseLoading, setPurchaseLoading] = useState(false);
+  const [successModal, setSuccessModal] = useState<{
+    isOpen: boolean;
+    data: any;
+  }>({ isOpen: false, data: null });
 
   useEffect(() => {
     if (!id) return;
@@ -49,7 +54,15 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
       if (!res.ok) {
         setError(data.error || "Purchase failed");
       } else {
-        router.push(`/orders/${data.orderId}/success`);
+        setSuccessModal({
+          isOpen: true,
+          data: {
+            orderId: data.orderId,
+            productName: product.name,
+            quantity: selectedTier.quantity,
+            amount: Number(selectedTier.price)
+          }
+        });
       }
     } catch (err: any) {
       setError(err.message);
@@ -144,6 +157,14 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
           </div>
         </div>
       </main>
+      <OrderSuccessModal 
+        isOpen={successModal.isOpen} 
+        onClose={() => {
+          setSuccessModal({ ...successModal, isOpen: false });
+          router.push("/dashboard"); // Redirect to dashboard after closing from detail page
+        }}
+        orderData={successModal.data}
+      />
     </div>
   );
 }

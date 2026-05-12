@@ -7,6 +7,7 @@ import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { Search, ShoppingCart, CheckCircle2, AlertCircle } from "lucide-react";
 import Swal from "sweetalert2";
+import { OrderSuccessModal } from "@/components/order-success-modal";
 
 function ShopContent() {
   const [categories, setCategories] = useState<any[]>([]);
@@ -14,6 +15,10 @@ function ShopContent() {
   const [selectedTiers, setSelectedTiers] = useState<Record<string, string>>({}); // productId -> tierId
   const [buying, setBuying] = useState<string | null>(null); // productId
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [successModal, setSuccessModal] = useState<{
+    isOpen: boolean;
+    data: any;
+  }>({ isOpen: false, data: null });
   const router = useRouter();
 
   useEffect(() => {
@@ -87,31 +92,16 @@ function ShopContent() {
         const data = await res.json();
 
         if (res.ok) {
-          Swal.fire({
-            title: "✅ Order delivered successfully",
-            html: `
-              <div class="text-left mt-4 p-4 bg-surface rounded-xl border border-border-default space-y-2">
-                <p><strong class="text-text-secondary">Product:</strong> <span class="text-foreground font-bold">${product.name}</span></p>
-                <p><strong class="text-text-secondary">Package:</strong> <span class="text-foreground font-bold">${selectedTierInfo.quantity} Account(s)</span></p>
-                <p><strong class="text-text-secondary">Amount Paid:</strong> <span class="text-primary font-bold">₦${Number(selectedTierInfo.price).toLocaleString()}</span></p>
-              </div>
-            `,
-            icon: "success",
-            confirmButtonColor: "var(--primary)",
-            confirmButtonText: "Reveal My Credentials",
-            background: "var(--background)",
-            color: "var(--foreground)",
-            customClass: {
-              popup: 'rounded-2xl border border-border-default shadow-2xl',
-              confirmButton: 'rounded-xl font-bold px-8 py-3 w-full mt-4',
-              title: 'font-syne text-2xl font-bold text-foreground',
-              htmlContainer: 'm-0 p-0',
-              icon: 'border-0 bg-success/10 text-success'
+          setSuccessModal({
+            isOpen: true,
+            data: {
+              orderId: data.orderId,
+              productName: product.name,
+              quantity: selectedTierInfo.quantity,
+              amount: Number(selectedTierInfo.price)
             }
-          }).then(() => {
-            checkAuth();
-            router.push(`/orders/${data.orderId}/success`);
           });
+          checkAuth(); // Refresh balance
         } else {
           Swal.fire({
             title: "Purchase Failed",
@@ -289,6 +279,11 @@ function ShopContent() {
         )}
       </main>
       <Footer />
+      <OrderSuccessModal 
+        isOpen={successModal.isOpen} 
+        onClose={() => setSuccessModal({ ...successModal, isOpen: false })}
+        orderData={successModal.data}
+      />
     </div>
   );
 }
