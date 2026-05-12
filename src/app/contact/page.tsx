@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
-import { Mail, MessageSquare, Clock } from "lucide-react";
+import { Mail, MessageCircle, Clock, Send } from "lucide-react";
 import Swal from "sweetalert2";
 
 export default function ContactPage() {
