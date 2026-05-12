@@ -1,5 +1,5 @@
 import { prisma } from "./prisma";
-import { unstable_cache, revalidateTag } from "next/cache";
+import { unstable_cache, revalidatePath } from "next/cache";
 
 export type SiteSettings = {
   siteName: string;
@@ -97,7 +97,7 @@ export const getSettings = unstable_cache(
 );
 
 export function invalidateSettingsCache() {
-  revalidateTag(SETTINGS_TAG);
+  revalidatePath("/", "layout"); // Bust cache for all pages using root layout
 }
 
 export async function updateSetting(key: string, value: string) {
