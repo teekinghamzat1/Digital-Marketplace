@@ -1,5 +1,7 @@
-// @ts-ignore - Bypassing strict type check for build environment compatibility
-import { authenticator } from 'otplib';
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const { authenticator } = require("otplib");
+
 import QRCode from "qrcode";
 import crypto from "crypto";
 
