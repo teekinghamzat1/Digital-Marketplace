@@ -508,7 +508,7 @@ export default function AdminProducts() {
             </form>
           </div>
         </div>
-      {/* Manage Individual Inventory Modal */}
+      )}
       {manageInventoryModalOpen && activeProduct && (
         <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
           <div className="vault-card w-full max-w-4xl p-8 max-h-[90vh] flex flex-col">
