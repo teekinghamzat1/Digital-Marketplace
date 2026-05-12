@@ -8,14 +8,15 @@ import { logAction } from "@/lib/audit";
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const admin = await getAdminFromRequest();
     if (!admin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const items = await prisma.productItem.findMany({
-      where: { productId: params.id },
+      where: { productId: id },
       orderBy: { createdAt: "desc" },
     });
 
@@ -26,13 +27,14 @@ export async function GET(
 }
 
 /**
- * PATCH: Update an individual inventory item (e.g., change credential text or sold status)
+ * PATCH: Update an individual inventory item
  */
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id: productId } = await params;
     const admin = await getAdminFromRequest();
     if (!admin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -53,7 +55,7 @@ export async function PATCH(
       action: "INVENTORY_ITEM_UPDATE",
       entity: "PRODUCT_ITEM",
       entityId: itemId,
-      details: { productId: params.id, isSold }
+      details: { productId, isSold }
     });
 
     return NextResponse.json({ message: "Item updated successfully", item: updatedItem });
@@ -67,9 +69,10 @@ export async function PATCH(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id: productId } = await params;
     const admin = await getAdminFromRequest();
     if (!admin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -87,7 +90,7 @@ export async function DELETE(
       action: "INVENTORY_ITEM_DELETE",
       entity: "PRODUCT_ITEM",
       entityId: itemId,
-      details: { productId: params.id }
+      details: { productId }
     });
 
     return NextResponse.json({ message: "Item deleted successfully" });
