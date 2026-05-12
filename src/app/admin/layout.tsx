@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Package, Users, Settings, LogOut, Menu, X, Tags, AlertCircle } from "lucide-react";
+import { LayoutDashboard, Package, Users, Settings, LogOut, Menu, X, Tags, AlertCircle, ShoppingBag } from "lucide-react";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -17,6 +17,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const navItems = [
     { name: "Overview", href: "/admin", icon: LayoutDashboard },
+    { name: "Order Management", href: "/admin/orders", icon: ShoppingBag },
     { name: "Categories", href: "/admin/categories", icon: Tags },
     { name: "Products & Inventory", href: "/admin/products", icon: Package },
     { name: "Users & Wallets", href: "/admin/users", icon: Users },

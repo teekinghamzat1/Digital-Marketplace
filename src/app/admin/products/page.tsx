@@ -264,80 +264,121 @@ export default function AdminProducts() {
         <div className="bg-surface border border-border-default rounded-xl overflow-hidden">
           <table className="w-full text-left">
             <thead className="bg-surface-elevated border-b border-border-default">
-              <tr>
-                <th className="px-6 py-4 text-xs font-bold text-text-muted uppercase tracking-wider">Product</th>
-                <th className="px-6 py-4 text-xs font-bold text-text-muted uppercase tracking-wider">Category</th>
-                <th className="px-6 py-4 text-xs font-bold text-text-muted uppercase tracking-wider">Tiers</th>
-                <th className="px-6 py-4 text-xs font-bold text-text-muted uppercase tracking-wider">Stock</th>
-                <th className="px-6 py-4 text-xs font-bold text-text-muted uppercase tracking-wider">Status</th>
-                <th className="px-6 py-4 text-xs font-bold text-text-muted uppercase tracking-wider text-right">Actions</th>
+              <tr className="text-text-muted text-xs uppercase tracking-widest font-bold">
+                <th className="px-6 py-4">Product</th>
+                <th className="px-6 py-4">Category</th>
+                <th className="px-6 py-4" colSpan={2}>SKU Inventory / Pricing</th>
+                <th className="px-6 py-4">Status</th>
+                <th className="px-6 py-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border-default">
-              {products.map(prod => (
-                <tr key={prod.id} className="hover:bg-surface-elevated/50">
-                  <td className="px-6 py-4">
-                    <div className="font-bold text-foreground">{prod.name}</div>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-text-secondary">{prod.category.name}</td>
-                  <td className="px-6 py-4">
-                    <div className="flex flex-wrap gap-1">
-                      {prod.tiers.map((t: any) => (
-                        <span key={t.id} className="text-[10px] px-1.5 py-0.5 bg-surface-elevated rounded border border-border-default text-text-muted">
-                          {t.label} (₦{Number(t.price).toLocaleString()})
-                        </span>
-                      ))}
-                      {prod.tiers.length === 0 && <span className="text-xs text-error italic">No tiers</span>}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      <span className={`font-bold ${prod._count?.items < 10 && prod._count?.items > 0 ? 'text-warning' : prod._count?.items === 0 ? 'text-error' : 'text-foreground'}`}>
-                        {prod._count?.items || 0}
+              {products.map(prod => {
+                const unsoldStock = prod._count?.items || 0;
+                
+                return (
+                  <tr key={prod.id} className="hover:bg-surface-elevated/50">
+                    <td className="px-6 py-6 align-top">
+                      <div className="font-black text-lg text-foreground font-[family-name:var(--font-syne)]">{prod.name}</div>
+                      <div className="text-xs text-text-muted mt-1 uppercase tracking-widest font-bold">ID: {prod.id.split('-')[0]}</div>
+                    </td>
+                    <td className="px-6 py-6 align-top">
+                      <span className="px-2 py-1 bg-surface-elevated border border-border-default rounded text-xs font-bold text-text-secondary">
+                        {prod.category.name}
                       </span>
-                      {prod._count?.items < 10 && prod._count?.items > 0 && (
-                        <AlertTriangle size={14} className="text-warning" title="Low Stock!" />
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className={`px-2 py-1 rounded text-xs font-bold ${prod.isActive ? 'bg-success/10 text-success' : 'bg-error/10 text-error'}`}>
-                      {prod.isActive ? 'Active' : 'Inactive'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-right space-x-2">
-                    <button 
-                      onClick={() => { setActiveProduct(prod); setInventoryModalOpen(true); setInventoryText(""); }}
-                      className="text-text-secondary hover:text-primary transition-colors p-2" 
-                      title="Upload Inventory"
-                    >
-                      <Package size={18} />
-                    </button>
-                    <button 
-                      onClick={() => { setActiveProduct(prod); fetchInventoryItems(prod.id); setManageInventoryModalOpen(true); }}
-                      className="text-text-secondary hover:text-primary transition-colors p-2" 
-                      title="Manage Individual Items"
-                    >
-                      <List size={18} />
-                    </button>
-                    <button 
-                      onClick={() => handleRemoveInventory(prod)}
-                      className="text-text-secondary hover:text-error transition-colors p-2" 
-                      title="Bulk Remove Unsold Stock"
-                    >
-                      <MinusCircle size={18} />
-                    </button>
-                    <button 
-                      onClick={() => { setActiveProduct(prod); setTierModalOpen(true); }}
-                      className="text-text-secondary hover:text-primary transition-colors p-2" 
-                      title="Manage Tiers"
-                    >
-                      <Layers size={18} />
-                    </button>
-                    <button onClick={() => handleEdit(prod)} className="text-text-secondary hover:text-primary transition-colors p-2"><Pencil size={18} /></button>
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                    <td className="px-6 py-6" colSpan={2}>
+                      <div className="space-y-3">
+                        {prod.tiers.sort((a,b) => a.quantity - b.quantity).map((t: any) => {
+                          const isAvailable = unsoldStock >= t.quantity;
+                          const canFulfillCount = Math.floor(unsoldStock / t.quantity);
+                          
+                          let statusColor = "text-success bg-success/10 border-success/20";
+                          let statusText = "In Stock";
+                          
+                          if (canFulfillCount === 0) {
+                            statusColor = "text-error bg-error/10 border-error/20";
+                            statusText = "Out of Stock";
+                          } else if (canFulfillCount < 5) {
+                            statusColor = "text-warning bg-warning/10 border-warning/20";
+                            statusText = "Low Stock";
+                          }
+
+                          return (
+                            <div key={t.id} className="flex items-center justify-between p-3 bg-surface-elevated/30 rounded-xl border border-border-default group/tier">
+                              <div className="flex items-center gap-4">
+                                <div className="w-10 h-10 rounded-lg bg-surface flex items-center justify-center font-black text-primary border border-border-default">
+                                  {t.quantity}
+                                </div>
+                                <div>
+                                  <div className="text-sm font-bold text-foreground">{t.label}</div>
+                                  <div className="text-[10px] text-text-muted font-bold">₦{Number(t.price).toLocaleString()}</div>
+                                </div>
+                              </div>
+                              
+                              <div className="flex items-center gap-4">
+                                <div className="text-right mr-4">
+                                  <div className="text-xs font-black text-foreground">{canFulfillCount} Packs</div>
+                                  <div className="text-[10px] text-text-secondary uppercase font-bold tracking-tighter">Available</div>
+                                </div>
+                                <span className={`px-2 py-1 rounded text-[10px] font-black uppercase border ${statusColor}`}>
+                                  {statusText}
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                        {prod.tiers.length === 0 && (
+                          <div className="flex items-center gap-2 text-error text-sm font-bold p-3 bg-error/5 rounded-xl border border-error/10">
+                            <AlertTriangle size={16} /> No pricing tiers configured
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-6 py-6 align-top">
+                      <span className={`px-2 py-1 rounded text-[10px] font-black uppercase ${prod.isActive ? 'bg-success text-white' : 'bg-surface-elevated text-text-muted border border-border-default'}`}>
+                        {prod.isActive ? 'Active' : 'Inactive'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-6 text-right space-x-1 align-top">
+                      <div className="flex flex-col gap-1 items-end">
+                        <div className="flex gap-1">
+                          <button 
+                            onClick={() => { setActiveProduct(prod); setInventoryModalOpen(true); setInventoryText(""); }}
+                            className="bg-surface hover:bg-primary/10 text-text-secondary hover:text-primary transition-all p-2 rounded-lg border border-border-default" 
+                            title="Upload Stock"
+                          >
+                            <Package size={18} />
+                          </button>
+                          <button 
+                            onClick={() => { setActiveProduct(prod); fetchInventoryItems(prod.id); setManageInventoryModalOpen(true); }}
+                            className="bg-surface hover:bg-primary/10 text-text-secondary hover:text-primary transition-all p-2 rounded-lg border border-border-default" 
+                            title="Manage Individual Stock"
+                          >
+                            <List size={18} />
+                          </button>
+                        </div>
+                        <div className="flex gap-1">
+                          <button 
+                            onClick={() => { setActiveProduct(prod); setTierModalOpen(true); }}
+                            className="bg-surface hover:bg-primary/10 text-text-secondary hover:text-primary transition-all p-2 rounded-lg border border-border-default" 
+                            title="Pricing Tiers"
+                          >
+                            <Layers size={18} />
+                          </button>
+                          <button 
+                            onClick={() => handleEdit(prod)} 
+                            className="bg-surface hover:bg-primary/10 text-text-secondary hover:text-primary transition-all p-2 rounded-lg border border-border-default"
+                            title="Edit Basic Info"
+                          >
+                            <Pencil size={18} />
+                          </button>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

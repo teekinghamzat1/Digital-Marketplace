@@ -49,7 +49,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
       if (!res.ok) {
         setError(data.error || "Purchase failed");
       } else {
-        router.push("/dashboard");
+        router.push(`/orders/${data.orderId}/success`);
       }
     } catch (err: any) {
       setError(err.message);

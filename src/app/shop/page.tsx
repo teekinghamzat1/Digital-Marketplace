@@ -109,7 +109,7 @@ function ShopContent() {
               icon: 'border-0 bg-success/10 text-success'
             }
           }).then(() => {
-            router.push("/dashboard");
+            router.push(`/orders/${data.orderId}/success`);
           });
         } else {
           Swal.fire({
