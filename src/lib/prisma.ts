@@ -5,8 +5,8 @@ import { Pool } from 'pg';
 const connectionString = process.env.DATABASE_URL;
 const pool = new Pool({ 
   connectionString,
-  max: 20,
-  idleTimeoutMillis: 30000,
+  max: 2,              // Serverless: keep this low — each fn instance has its own pool
+  idleTimeoutMillis: 10000,
   connectionTimeoutMillis: 10000,
 });
 const adapter = new PrismaPg(pool);

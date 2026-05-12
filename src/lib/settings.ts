@@ -1,5 +1,5 @@
 import { prisma } from "./prisma";
-import { unstable_cache, revalidatePath } from "next/cache";
+import { revalidatePath } from "next/cache";
 
 export type SiteSettings = {
   siteName: string;
@@ -23,7 +23,7 @@ export type SiteSettings = {
     instagram?: string;
     linkedin?: string;
   };
-  // Legacy field alias kept for backward compat
+  // Legacy alias kept for backward compat
   footerCopyright: string;
 };
 
@@ -47,9 +47,12 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   footerCopyright: `© ${new Date().getFullYear()} Digital Marketplace. All rights reserved.`,
 };
 
-const SETTINGS_TAG = "site_settings";
-
-async function _fetchSettings(): Promise<SiteSettings> {
+/**
+ * Fetch site settings directly from the DB.
+ * No persistent in-memory cache — Next.js handles page-level ISR caching.
+ * This ensures admin saves reflect immediately after revalidatePath() is called.
+ */
+export async function getSettings(): Promise<SiteSettings> {
   try {
     const rows = await prisma.siteSetting.findMany();
     const map = rows.reduce((acc, r) => {
@@ -89,15 +92,12 @@ async function _fetchSettings(): Promise<SiteSettings> {
   }
 }
 
-// Cached version — revalidated whenever admin saves
-export const getSettings = unstable_cache(
-  _fetchSettings,
-  [SETTINGS_TAG],
-  { tags: [SETTINGS_TAG], revalidate: 3600 }
-);
-
+/**
+ * Called by the admin settings API after a successful save.
+ * Tells Next.js to re-render all pages on the next request.
+ */
 export function invalidateSettingsCache() {
-  revalidatePath("/", "layout"); // Bust cache for all pages using root layout
+  revalidatePath("/", "layout");
 }
 
 export async function updateSetting(key: string, value: string) {

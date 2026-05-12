@@ -29,21 +29,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const data = await request.json(); // { key: value, ... }
-    
-    const upserts = Object.entries(data).map(([key, value]) => {
-      return prisma.siteSetting.upsert({
-        where: { key },
-        update: { value: String(value) },
-        create: { key, value: String(value) }
-      });
-    });
+    const data = await request.json();
 
-    await Promise.all(upserts);
-    invalidateSettingsCache(); // Bust the Next.js cache so all pages reflect new settings
+    // Use a single transaction to batch all upserts — avoids opening many
+    // parallel connections which exhausts the serverless connection pool
+    await prisma.$transaction(
+      Object.entries(data).map(([key, value]) =>
+        prisma.siteSetting.upsert({
+          where: { key },
+          update: { value: String(value) },
+          create: { key, value: String(value) },
+        })
+      )
+    );
+
+    // Bust Next.js page cache so all SSR pages pick up the new settings
+    invalidateSettingsCache();
 
     return NextResponse.json({ message: "Settings updated" }, { status: 200 });
   } catch (error: any) {
+    console.error("[admin/settings POST]", error.message);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
