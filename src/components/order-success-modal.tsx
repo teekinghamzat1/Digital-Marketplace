@@ -135,7 +135,7 @@ export function OrderSuccessModal({ isOpen, onClose, orderData }: OrderSuccessMo
                 cy="48"
                 r="40"
                 fill="none"
-                stroke="rgba(0, 200, 150, 0.1)"
+                stroke="rgba(255, 140, 0, 0.1)"
                 strokeWidth="6"
               />
               <circle
@@ -143,7 +143,7 @@ export function OrderSuccessModal({ isOpen, onClose, orderData }: OrderSuccessMo
                 cy="48"
                 r="40"
                 fill="none"
-                stroke="#00C896"
+                stroke="#FF8C00"
                 strokeWidth="6"
                 strokeDasharray="251.2"
                 strokeDashoffset="251.2"
@@ -151,14 +151,14 @@ export function OrderSuccessModal({ isOpen, onClose, orderData }: OrderSuccessMo
                 strokeLinecap="round"
               />
             </svg>
-            <div className="absolute inset-0 flex items-center justify-center text-[#00C896] animate-in zoom-in fade-in delay-500 duration-500 fill-mode-both">
+            <div className="absolute inset-0 flex items-center justify-center text-[#FF8C00] animate-in zoom-in fade-in delay-500 duration-500 fill-mode-both">
               <Check size={40} strokeWidth={4} />
             </div>
             {/* Pulsing Glow */}
-            <div className="absolute inset-0 bg-[#00C896]/20 rounded-full blur-xl animate-pulse" />
+            <div className="absolute inset-0 bg-[#FF8C00]/20 rounded-full blur-xl animate-pulse" />
           </div>
 
-          <h2 className="text-2xl font-bold font-syne text-white mb-2 text-center drop-shadow-[0_0_8px_rgba(0,200,150,0.4)]">
+          <h2 className="text-2xl font-bold font-syne text-white mb-2 text-center drop-shadow-[0_0_8px_rgba(255,140,0,0.4)]">
             Order Delivered Successfully
           </h2>
           <p className="text-white/40 text-sm mb-8 text-center font-medium">Your digital goods are ready for pickup</p>
@@ -167,13 +167,13 @@ export function OrderSuccessModal({ isOpen, onClose, orderData }: OrderSuccessMo
           <div className="w-full bg-white/[0.03] border border-white/5 rounded-2xl p-5 mb-8 space-y-4">
             <div className="flex items-center justify-between group">
               <div className="flex items-center gap-3 text-white/50 text-sm font-bold uppercase tracking-widest">
-                <Tag size={16} className="text-primary" /> Product
+                <Tag size={16} className="text-[#FF8C00]" /> Product
               </div>
               <span className="text-white font-bold text-sm">{orderData.productName}</span>
             </div>
             <div className="flex items-center justify-between group">
               <div className="flex items-center gap-3 text-white/50 text-sm font-bold uppercase tracking-widest">
-                <PackageIcon size={16} className="text-success" /> Package
+                <PackageIcon size={16} className="text-[#FF8C00]" /> Package
               </div>
               <span className="text-white font-bold text-sm">{orderData.quantity} Account(s)</span>
             </div>
@@ -191,20 +191,20 @@ export function OrderSuccessModal({ isOpen, onClose, orderData }: OrderSuccessMo
               <button 
                 onClick={handleReveal}
                 disabled={revealing}
-                className="w-full flex items-center justify-center gap-3 py-4 bg-white/5 border border-white/10 hover:border-[#00C896]/50 hover:bg-[#00C896]/5 text-white rounded-xl font-bold transition-all duration-300 group shadow-lg"
+                className="w-full flex items-center justify-center gap-3 py-4 bg-white/5 border border-white/10 hover:border-[#FF8C00]/50 hover:bg-[#FF8C00]/5 text-white rounded-xl font-bold transition-all duration-300 group shadow-lg"
               >
                 {revealing ? (
-                  <Loader2 size={20} className="animate-spin text-[#00C896]" />
+                  <Loader2 size={20} className="animate-spin text-[#FF8C00]" />
                 ) : (
                   <>
-                    <Lock size={20} className="text-[#00C896] group-hover:scale-110 transition-transform" /> 
+                    <Lock size={20} className="text-[#FF8C00] group-hover:scale-110 transition-transform" /> 
                     Reveal Credentials
                   </>
                 )}
               </button>
             ) : (
               <div className="space-y-4 animate-in slide-in-from-bottom-4 duration-300">
-                <div className="bg-black/40 border border-white/5 rounded-xl p-4 font-mono text-sm text-[#00C896] break-all max-h-32 overflow-y-auto custom-scrollbar">
+                <div className="bg-black/40 border border-white/5 rounded-xl p-4 font-mono text-sm text-[#FF8C00] break-all max-h-32 overflow-y-auto custom-scrollbar">
                   {credentials.map((cred, i) => (
                     <div key={i} className="mb-2 last:mb-0 pb-2 last:pb-0 border-b last:border-0 border-white/5">
                       {cred}
@@ -213,7 +213,7 @@ export function OrderSuccessModal({ isOpen, onClose, orderData }: OrderSuccessMo
                 </div>
                 <button 
                   onClick={handleCopy}
-                  className="w-full flex items-center justify-center gap-3 py-4 bg-[#00C896] hover:bg-[#00B085] text-white rounded-xl font-bold transition-all shadow-[0_0_20px_rgba(0,200,150,0.3)]"
+                  className="w-full flex items-center justify-center gap-3 py-4 bg-[#FF8C00] hover:bg-[#E67E00] text-white rounded-xl font-bold transition-all shadow-[0_0_20px_rgba(255,140,0,0.3)]"
                 >
                   {copied ? (
                     <>
