@@ -22,8 +22,8 @@ export function MobileFooterNav() {
   // Derive active tab from current route purely, avoiding local state flickering
   const activeTab = navItems.find(item => item.match(pathname))?.id || '';
 
-  // Hide for non-authenticated users OR on auth pages
-  if (loading || !user || pathname === '/login' || pathname === '/register') return null;
+  // Hide for non-authenticated users OR on auth pages OR admin pages
+  if (loading || !user || pathname === '/login' || pathname === '/register' || pathname.startsWith('/admin')) return null;
 
   const handleTabClick = (href: string) => {
     router.push(href);

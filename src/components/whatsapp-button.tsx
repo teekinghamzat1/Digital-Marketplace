@@ -1,11 +1,18 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { MessageCircle } from "lucide-react";
+import { usePathname } from "next/navigation";
 
 export function WhatsAppButton() {
+  const pathname = usePathname();
   const [whatsappNumber, setWhatsappNumber] = React.useState("+8801313839290");
+  const [mounted, setMounted] = useState(false);
   const message = "Hello, I have a question about the Marketplace.";
+
+  useEffect(() => setMounted(true), []);
+
+  if (!mounted || pathname.startsWith("/admin")) return null;
 
   React.useEffect(() => {
     fetch("/api/settings")
