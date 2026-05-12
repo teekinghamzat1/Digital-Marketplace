@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Pencil, Trash2, Package, Layers, Settings2, MinusCircle, AlertTriangle } from "lucide-react";
+import { Plus, Pencil, Trash2, Package, Layers, Settings2, MinusCircle, AlertTriangle, List, Search, Check, X } from "lucide-react";
 import Swal from "sweetalert2";
 
 export default function AdminProducts() {
@@ -12,9 +12,13 @@ export default function AdminProducts() {
   const [modalOpen, setModalOpen] = useState(false);
   const [tierModalOpen, setTierModalOpen] = useState(false);
   const [inventoryModalOpen, setInventoryModalOpen] = useState(false);
+  const [manageInventoryModalOpen, setManageInventoryModalOpen] = useState(false);
+  const [inventoryItems, setInventoryItems] = useState<any[]>([]);
   const [inventoryText, setInventoryText] = useState("");
+  const [editingItem, setEditingItem] = useState<any>(null);
   const [editingProduct, setEditingProduct] = useState<any>(null);
   const [activeProduct, setActiveProduct] = useState<any>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const [formData, setFormData] = useState({ 
     name: "", 
     categoryId: "", 
@@ -159,6 +163,50 @@ export default function AdminProducts() {
     }
   };
 
+  const fetchInventoryItems = async (prodId: string) => {
+    try {
+      const res = await fetch(`/api/admin/products/${prodId}/inventory`, { credentials: "include" });
+      const data = await res.json();
+      setInventoryItems(data.items || []);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const updateInventoryItem = async (itemId: string, updates: any) => {
+    try {
+      const res = await fetch(`/api/admin/products/${activeProduct.id}/inventory`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ itemId, ...updates }),
+        credentials: "include"
+      });
+      if (res.ok) {
+        fetchInventoryItems(activeProduct.id);
+        fetchProducts();
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const deleteInventoryItem = async (itemId: string) => {
+    if (!confirm("Are you sure you want to delete this specific item?")) return;
+    try {
+      const res = await fetch(`/api/admin/products/${activeProduct.id}/inventory?itemId=${itemId}`, {
+        method: "DELETE",
+        credentials: "include"
+      });
+      if (res.ok) {
+        fetchInventoryItems(activeProduct.id);
+        fetchProducts();
+        Swal.fire({ title: "Deleted", icon: "success", toast: true, position: "top-end", timer: 2000, showConfirmButton: false });
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const handleRemoveInventory = async (prod: any) => {
     const stock = prod._count?.items || 0;
     if (stock === 0) {
@@ -266,9 +314,16 @@ export default function AdminProducts() {
                       <Package size={18} />
                     </button>
                     <button 
+                      onClick={() => { setActiveProduct(prod); fetchInventoryItems(prod.id); setManageInventoryModalOpen(true); }}
+                      className="text-text-secondary hover:text-primary transition-colors p-2" 
+                      title="Manage Individual Items"
+                    >
+                      <List size={18} />
+                    </button>
+                    <button 
                       onClick={() => handleRemoveInventory(prod)}
                       className="text-text-secondary hover:text-error transition-colors p-2" 
-                      title="Remove Unsold Inventory"
+                      title="Bulk Remove Unsold Stock"
                     >
                       <MinusCircle size={18} />
                     </button>
@@ -451,6 +506,106 @@ export default function AdminProducts() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      {/* Manage Individual Inventory Modal */}
+      {manageInventoryModalOpen && activeProduct && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+          <div className="vault-card w-full max-w-4xl p-8 max-h-[90vh] flex flex-col">
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <h2 className="text-2xl font-bold font-[family-name:var(--font-syne)]">Inventory Manager</h2>
+                <p className="text-text-secondary text-sm">Product: <span className="text-primary font-bold">{activeProduct.name}</span></p>
+              </div>
+              <button onClick={() => setManageInventoryModalOpen(false)} className="text-text-muted hover:text-foreground">
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="relative mb-6">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" size={18} />
+              <input 
+                type="text" 
+                placeholder="Search credentials..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-surface-elevated border border-border-default rounded-xl pl-10 pr-4 py-2 text-sm outline-none focus:border-primary transition-all"
+              />
+            </div>
+
+            <div className="flex-1 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
+              {inventoryItems
+                .filter(item => item.credentialText.toLowerCase().includes(searchQuery.toLowerCase()))
+                .map((item) => (
+                <div key={item.id} className="bg-surface border border-border-default rounded-xl p-4 flex items-center justify-between gap-4 group">
+                  <div className="flex-1 min-w-0">
+                    {editingItem === item.id ? (
+                      <div className="flex gap-2">
+                        <input 
+                          autoFocus
+                          className="flex-1 bg-surface-elevated border border-primary rounded px-2 py-1 text-sm font-mono"
+                          defaultValue={item.credentialText}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              updateInventoryItem(item.id, { credentialText: e.currentTarget.value });
+                              setEditingItem(null);
+                            }
+                            if (e.key === 'Escape') setEditingItem(null);
+                          }}
+                          onBlur={(e) => {
+                            updateInventoryItem(item.id, { credentialText: e.target.value });
+                            setEditingItem(null);
+                          }}
+                        />
+                      </div>
+                    ) : (
+                      <div 
+                        onDoubleClick={() => setEditingItem(item.id)}
+                        className="text-sm font-mono text-foreground truncate cursor-pointer hover:text-primary transition-colors"
+                        title="Double-click to edit"
+                      >
+                        {item.credentialText}
+                      </div>
+                    )}
+                    <div className="flex items-center gap-3 mt-1">
+                      <span className="text-[10px] text-text-muted uppercase font-bold tracking-widest">
+                        Added {new Date(item.createdAt).toLocaleDateString()}
+                      </span>
+                      <span className={`text-[10px] font-black uppercase px-1.5 rounded ${item.isSold ? 'bg-error/10 text-error' : 'bg-success/10 text-success'}`}>
+                        {item.isSold ? 'Sold' : 'In Stock'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button 
+                      onClick={() => updateInventoryItem(item.id, { isSold: !item.isSold })}
+                      className={`p-2 rounded-lg transition-all ${item.isSold ? 'text-success hover:bg-success/10' : 'text-warning hover:bg-warning/10'}`}
+                      title={item.isSold ? "Mark as In Stock" : "Mark as Sold"}
+                    >
+                      {item.isSold ? <Check size={18} /> : <MinusCircle size={18} />}
+                    </button>
+                    <button 
+                      onClick={() => setEditingItem(item.id)}
+                      className="p-2 text-text-muted hover:text-primary hover:bg-primary/10 rounded-lg transition-all"
+                    >
+                      <Pencil size={18} />
+                    </button>
+                    <button 
+                      onClick={() => deleteInventoryItem(item.id)}
+                      className="p-2 text-text-muted hover:text-error hover:bg-error/10 rounded-lg transition-all"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {inventoryItems.length === 0 && (
+                <div className="text-center py-12 text-text-muted italic">
+                  No inventory items found for this product.
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
