@@ -19,7 +19,7 @@ export async function getUserWalletBalance(userId: string): Promise<number> {
 
   const balance = transactions.reduce((acc, tx) => {
     const amount = Number(tx.amount);
-    return tx.type === "CREDIT" ? acc + amount : acc - amount;
+    return tx.type === "credit" ? acc + amount : acc - amount;
   }, 0);
 
   logger.debug({ userId, balance }, "Calculated wallet balance from transaction history");
