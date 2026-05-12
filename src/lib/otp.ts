@@ -2,6 +2,7 @@ import { createRequire } from "module";
 const require = createRequire(import.meta.url);
 const { authenticator } = require("otplib");
 
+// @ts-ignore
 import QRCode from "qrcode";
 import crypto from "crypto";
 

@@ -1,3 +1,4 @@
+// @ts-ignore
 import sanitizeHtml from "sanitize-html";
 
 export function sanitizeInput<T>(data: T): T {
