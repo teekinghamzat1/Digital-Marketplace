@@ -9,7 +9,7 @@ export async function setSessionCookie(name: string, value: string) {
   cookieStore.set(name, value, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
+    sameSite: "lax",
     path: "/",
     maxAge: SESSION_DURATION,
   });

@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Wallet, CreditCard, ArrowDownLeft, ArrowUpRight } from "lucide-react";
+import { FundingSuccessModal } from "@/components/funding-success-modal";
 
 function WalletContent() {
   const searchParams = useSearchParams();
@@ -14,13 +15,23 @@ function WalletContent() {
   // Initialize with URL params if present
   const [error, setError] = useState(searchParams.get("error") || "");
   const [success, setSuccess] = useState(searchParams.get("success") || "");
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [fundedAmount, setFundedAmount] = useState(parseFloat(searchParams.get("amount") || "0"));
+
+  useEffect(() => {
+    if (success && fundedAmount > 0) {
+      setShowSuccessModal(true);
+      setSuccess(""); // Clear text success to avoid double UI
+    }
+  }, [success, fundedAmount]);
 
   // Clear query params from URL without refreshing
   useEffect(() => {
-    if (searchParams.has("success") || searchParams.has("error")) {
+    if (searchParams.has("success") || searchParams.has("error") || searchParams.has("amount")) {
       const url = new URL(window.location.href);
       url.searchParams.delete("success");
       url.searchParams.delete("error");
+      url.searchParams.delete("amount");
       window.history.replaceState({}, '', url.toString());
     }
   }, [searchParams]);
@@ -177,6 +188,13 @@ function WalletContent() {
           </div>
         )}
       </div>
+      
+      <FundingSuccessModal 
+        isOpen={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        amount={fundedAmount}
+        newBalance={data.balance}
+      />
     </div>
   );
 }

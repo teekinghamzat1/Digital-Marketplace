@@ -96,7 +96,7 @@ export async function GET(request: NextRequest) {
       }).catch(console.error);
     }
 
-    return NextResponse.redirect(new URL("/dashboard/wallet?success=Wallet funded successfully", request.url));
+    return NextResponse.redirect(new URL(`/dashboard/wallet?success=Wallet funded successfully&amount=${result.amount}`, request.url));
 
   } catch (error: any) {
     console.error("Paystack verification error:", error);
