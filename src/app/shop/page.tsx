@@ -98,7 +98,7 @@ function ShopContent() {
             `,
             icon: "success",
             confirmButtonColor: "var(--primary)",
-            confirmButtonText: "View in Dashboard",
+            confirmButtonText: "Reveal My Credentials",
             background: "var(--background)",
             color: "var(--foreground)",
             customClass: {
@@ -109,6 +109,7 @@ function ShopContent() {
               icon: 'border-0 bg-success/10 text-success'
             }
           }).then(() => {
+            checkAuth();
             router.push(`/orders/${data.orderId}/success`);
           });
         } else {

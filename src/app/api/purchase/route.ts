@@ -82,6 +82,11 @@ export async function POST(request: NextRequest) {
       });
 
       // E. Debit Wallet
+      await tx.user.update({
+        where: { id: user.id },
+        data: { walletBalance: { decrement: price } }
+      });
+
       await tx.walletTransaction.create({
         data: {
           userId: user.id,
