@@ -44,10 +44,15 @@ export async function DELETE(
 
     const { id } = await params;
     
-    // Check if it has sales
-    const saleCount = await prisma.sale.count({ where: { productId: id } });
-    if (saleCount > 0) {
-      return NextResponse.json({ error: "Cannot delete product with associated sales" }, { status: 400 });
+    // Check if this product has completed orders — prevent data loss
+    const orderCount = await prisma.order.count({
+      where: { productId: id, status: "completed" }
+    });
+    if (orderCount > 0) {
+      return NextResponse.json(
+        { error: `Cannot delete product with ${orderCount} completed order(s). Deactivate it instead.` },
+        { status: 400 }
+      );
     }
 
     await prisma.productItem.deleteMany({ where: { productId: id } });
