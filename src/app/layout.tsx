@@ -62,10 +62,7 @@ export default async function RootLayout({
           disableTransitionOnChange
         >
           <UserProvider>
-            <BrandThemeHandler 
-              primaryColor={settings.primaryColor} 
-              secondaryColor={settings.secondaryColor} 
-            />
+            <BrandThemeHandler settings={settings} />
             {children}
             <WhatsAppButton />
             <MobileFooterNav />

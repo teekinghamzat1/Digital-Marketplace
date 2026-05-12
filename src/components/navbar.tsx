@@ -56,13 +56,15 @@ export function Navbar() {
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
           <Link href="/" className="text-xl font-bold font-syne text-primary flex items-center gap-2">
             {settings?.siteLogo ? (
-              <img src={settings.siteLogo} alt={settings.siteName} className="h-8 w-auto object-contain" />
+              <img src={settings.siteLogo} alt={settings?.siteName || "Logo"} className="h-8 w-auto object-contain" />
             ) : (
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white">
-                <ShoppingBag size={18} />
-              </div>
+              <>
+                <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white">
+                  <ShoppingBag size={18} />
+                </div>
+                <span>{settings?.siteName || "Sumon Mondal Logs"}</span>
+              </>
             )}
-            <span>{settings?.siteName || "Sumon Mondal Logs"}</span>
           </Link>
 
           {/* Desktop View */}
@@ -254,15 +256,21 @@ export function Navbar() {
           <div className="p-6 border-t border-border-default bg-surface-elevated/30">
             <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest mb-4 text-center">Contact & Support</p>
             <div className="flex items-center justify-center gap-4 mb-6">
-              <a href="https://t.me/smlogsmarket" target="_blank" className="w-12 h-12 bg-background border border-border-default rounded-xl flex items-center justify-center text-text-secondary hover:text-primary transition-all shadow-sm">
-                <Send size={20} />
-              </a>
-              <a href="https://wa.me/8801313839290" target="_blank" className="w-12 h-12 bg-background border border-border-default rounded-xl flex items-center justify-center text-text-secondary hover:text-primary transition-all shadow-sm">
-                <Phone size={20} />
-              </a>
-              <a href="mailto:support@sumonmondal.com" className="w-12 h-12 bg-background border border-border-default rounded-xl flex items-center justify-center text-text-secondary hover:text-primary transition-all shadow-sm">
-                <Shield size={20} />
-              </a>
+              {settings?.telegram && (
+                <a href={settings.telegram} target="_blank" className="w-12 h-12 bg-background border border-border-default rounded-xl flex items-center justify-center text-text-secondary hover:text-primary transition-all shadow-sm">
+                  <Send size={20} />
+                </a>
+              )}
+              {settings?.whatsapp && (
+                <a href={`https://wa.me/${settings.whatsapp.replace(/\+/g, '')}`} target="_blank" className="w-12 h-12 bg-background border border-border-default rounded-xl flex items-center justify-center text-text-secondary hover:text-primary transition-all shadow-sm">
+                  <Phone size={20} />
+                </a>
+              )}
+              {settings?.email && (
+                <a href={`mailto:${settings.email}`} className="w-12 h-12 bg-background border border-border-default rounded-xl flex items-center justify-center text-text-secondary hover:text-primary transition-all shadow-sm">
+                  <Shield size={20} />
+                </a>
+              )}
             </div>
             {user && (
               <button 

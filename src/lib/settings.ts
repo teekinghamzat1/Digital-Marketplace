@@ -1,63 +1,103 @@
 import { prisma } from "./prisma";
+import { unstable_cache, revalidateTag } from "next/cache";
 
 export type SiteSettings = {
   siteName: string;
+  siteDescription: string;
   siteLogo: string;
   favicon: string;
   primaryColor: string;
   secondaryColor: string;
+  accentColor: string;
+  backgroundColor: string;
+  textColor: string;
   footerContact: string;
+  address: string;
   email: string;
   whatsapp: string;
   telegram: string;
+  copyrightText: string;
   socialLinks: {
     facebook?: string;
     twitter?: string;
     instagram?: string;
     linkedin?: string;
   };
+  // Legacy field alias kept for backward compat
   footerCopyright: string;
 };
 
 export const DEFAULT_SETTINGS: SiteSettings = {
   siteName: "Digital Marketplace",
-  siteLogo: "/logo.png",
+  siteDescription: "The most trusted digital marketplace for verified accounts.",
+  siteLogo: "",
   favicon: "/favicon.ico",
-  primaryColor: "#f97316", // Orange-500
-  secondaryColor: "#fb923c", // Orange-400
-  footerContact: "123 Marketplace Ave, Digital City",
+  primaryColor: "#f97316",
+  secondaryColor: "#fb923c",
+  accentColor: "#f59e0b",
+  backgroundColor: "#ffffff",
+  textColor: "#111827",
+  footerContact: "",
+  address: "",
   email: "support@marketplace.com",
-  whatsapp: "+1234567890",
-  telegram: "https://t.me/marketplace",
+  whatsapp: "",
+  telegram: "",
+  copyrightText: `© ${new Date().getFullYear()} Digital Marketplace. All rights reserved.`,
   socialLinks: {},
   footerCopyright: `© ${new Date().getFullYear()} Digital Marketplace. All rights reserved.`,
 };
 
-export async function getSettings(): Promise<SiteSettings> {
+const SETTINGS_TAG = "site_settings";
+
+async function _fetchSettings(): Promise<SiteSettings> {
   try {
-    const settings = await prisma.siteSetting.findMany();
-    const settingsMap = settings.reduce((acc, curr) => {
-      acc[curr.key] = curr.value;
+    const rows = await prisma.siteSetting.findMany();
+    const map = rows.reduce((acc, r) => {
+      acc[r.key] = r.value;
       return acc;
     }, {} as Record<string, string>);
 
+    const copyrightText =
+      map.copyrightText ||
+      map.footerCopyright ||
+      DEFAULT_SETTINGS.copyrightText;
+
     return {
-      siteName: settingsMap.siteName || DEFAULT_SETTINGS.siteName,
-      siteLogo: settingsMap.siteLogo || DEFAULT_SETTINGS.siteLogo,
-      favicon: settingsMap.favicon || DEFAULT_SETTINGS.favicon,
-      primaryColor: settingsMap.primaryColor || DEFAULT_SETTINGS.primaryColor,
-      secondaryColor: settingsMap.secondaryColor || DEFAULT_SETTINGS.secondaryColor,
-      footerContact: settingsMap.footerContact || DEFAULT_SETTINGS.footerContact,
-      email: settingsMap.email || DEFAULT_SETTINGS.email,
-      whatsapp: settingsMap.whatsapp || DEFAULT_SETTINGS.whatsapp,
-      telegram: settingsMap.telegram || DEFAULT_SETTINGS.telegram,
-      socialLinks: settingsMap.socialLinks ? JSON.parse(settingsMap.socialLinks) : DEFAULT_SETTINGS.socialLinks,
-      footerCopyright: settingsMap.footerCopyright || DEFAULT_SETTINGS.footerCopyright,
+      siteName: map.siteName || DEFAULT_SETTINGS.siteName,
+      siteDescription: map.siteDescription || DEFAULT_SETTINGS.siteDescription,
+      siteLogo: map.siteLogo || DEFAULT_SETTINGS.siteLogo,
+      favicon: map.favicon || DEFAULT_SETTINGS.favicon,
+      primaryColor: map.primaryColor || DEFAULT_SETTINGS.primaryColor,
+      secondaryColor: map.secondaryColor || DEFAULT_SETTINGS.secondaryColor,
+      accentColor: map.accentColor || DEFAULT_SETTINGS.accentColor,
+      backgroundColor: map.backgroundColor || DEFAULT_SETTINGS.backgroundColor,
+      textColor: map.textColor || DEFAULT_SETTINGS.textColor,
+      footerContact: map.footerContact || DEFAULT_SETTINGS.footerContact,
+      address: map.address || DEFAULT_SETTINGS.address,
+      email: map.email || DEFAULT_SETTINGS.email,
+      whatsapp: map.whatsapp || DEFAULT_SETTINGS.whatsapp,
+      telegram: map.telegram || DEFAULT_SETTINGS.telegram,
+      copyrightText,
+      footerCopyright: copyrightText,
+      socialLinks: map.socialLinks
+        ? JSON.parse(map.socialLinks)
+        : DEFAULT_SETTINGS.socialLinks,
     };
   } catch (error) {
     console.error("Error fetching settings:", error);
     return DEFAULT_SETTINGS;
   }
+}
+
+// Cached version — revalidated whenever admin saves
+export const getSettings = unstable_cache(
+  _fetchSettings,
+  [SETTINGS_TAG],
+  { tags: [SETTINGS_TAG], revalidate: 3600 }
+);
+
+export function invalidateSettingsCache() {
+  revalidateTag(SETTINGS_TAG);
 }
 
 export async function updateSetting(key: string, value: string) {
@@ -68,9 +108,12 @@ export async function updateSetting(key: string, value: string) {
   });
 }
 
-export async function updateMultipleSettings(settings: Partial<Record<keyof SiteSettings, any>>) {
+export async function updateMultipleSettings(
+  settings: Partial<Record<keyof SiteSettings, any>>
+) {
   const promises = Object.entries(settings).map(([key, value]) => {
-    const stringValue = typeof value === "object" ? JSON.stringify(value) : String(value);
+    const stringValue =
+      typeof value === "object" ? JSON.stringify(value) : String(value);
     return updateSetting(key, stringValue);
   });
   return Promise.all(promises);

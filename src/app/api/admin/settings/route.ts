@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getAdminFromRequest } from "@/lib/auth";
+import { invalidateSettingsCache } from "@/lib/settings";
 
 export async function GET(request: NextRequest) {
   try {
@@ -39,6 +40,7 @@ export async function POST(request: NextRequest) {
     });
 
     await Promise.all(upserts);
+    invalidateSettingsCache(); // Bust the Next.js cache so all pages reflect new settings
 
     return NextResponse.json({ message: "Settings updated" }, { status: 200 });
   } catch (error: any) {
