@@ -181,10 +181,7 @@ export function OrderList({ initialOrders }: { initialOrders: Order[] }) {
         </div>
       </div>
 
-      {viewingOrderId && (
-        <OrderDetailView 
-          orderId={viewingOrderId} 
-          onClose={() => setViewingOrderId(null)} 
-        />
       )}
     </>
+  );
+}

@@ -141,3 +141,5 @@ export function ProductManager({ initialProducts }: { initialProducts: Product[]
         />
       )}
     </>
+  );
+}

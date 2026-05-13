@@ -163,3 +163,5 @@ export function UserManager({ initialUsers }: { initialUsers: User[] }) {
         />
       )}
     </>
+  );
+}
