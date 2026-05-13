@@ -7,6 +7,8 @@ import { WhatsAppButton } from "@/components/whatsapp-button";
 import { BrandThemeHandler } from "@/components/brand-theme-handler";
 import { UserProvider } from "@/context/UserContext";
 import { getSettings } from "@/lib/settings";
+import { Navbar } from "@/components/navbar";
+import { Footer } from "@/components/footer";
 
 const syne = Syne({
   variable: "--font-syne",
@@ -25,9 +27,14 @@ export async function generateMetadata(): Promise<Metadata> {
       default: settings.siteName,
       template: `%s | ${settings.siteName}`,
     },
-    description: "Premium digital account marketplace",
+    description: settings.siteDescription || "Premium digital account marketplace",
     icons: {
       icon: settings.favicon || "/favicon.ico",
+    },
+    openGraph: {
+      title: settings.siteName,
+      description: settings.siteDescription,
+      siteName: settings.siteName,
     }
   };
 }
@@ -63,8 +70,12 @@ export default async function RootLayout({
         >
           <UserProvider>
             <BrandThemeHandler settings={settings} />
-            {children}
-            <WhatsAppButton />
+            <Navbar settings={settings} />
+            <main className="flex-1">
+              {children}
+            </main>
+            <Footer settings={settings} />
+            <WhatsAppButton settings={settings} />
             <MobileFooterNav />
           </UserProvider>
         </ThemeProvider>

@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { Mail, Globe, Shield, FileText, Phone } from "lucide-react";
+import { Mail, Globe, Shield, FileText, Phone, Send } from "lucide-react";
+import { usePathname } from "next/navigation";
 import { SiteSettings } from "@/lib/settings";
 
 interface FooterProps {
@@ -10,6 +11,7 @@ interface FooterProps {
 }
 
 export function Footer({ settings: initialSettings }: FooterProps) {
+  const pathname = usePathname();
   const [settings, setSettings] = useState<SiteSettings | undefined>(initialSettings);
   const year = new Date().getFullYear();
 
@@ -22,19 +24,26 @@ export function Footer({ settings: initialSettings }: FooterProps) {
     }
   }, [initialSettings]);
 
-  const siteName = settings?.siteName || "Sumon Mondal Logs";
-  
+  if (pathname.startsWith("/admin")) return null;
+
+  const siteName = settings?.siteName || "Digital Marketplace";
+  const siteDescription = settings?.siteDescription || "The most trusted digital marketplace for verified accounts. Instant delivery, secure payments, and 24/7 automated processing.";
+  const copyrightText = settings?.copyrightText?.replace("{site_name}", siteName) || settings?.footerCopyright?.replace("{site_name}", siteName) || `© ${year} ${siteName}. All rights reserved.`;
+
   return (
     <footer className="border-t border-border-default bg-background py-16 px-4">
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12">
         {/* Brand Section */}
         <div className="col-span-1 md:col-span-2">
           <Link href="/" className="text-2xl font-bold font-syne text-primary mb-4 inline-block">
-            {siteName}
+            {settings?.siteLogo ? (
+              <img src={settings.siteLogo} alt={siteName} className="h-10 w-auto object-contain" />
+            ) : (
+              siteName
+            )}
           </Link>
           <p className="text-text-secondary max-w-sm mb-6">
-            The most trusted digital marketplace for verified accounts. 
-            Instant delivery, secure payments, and 24/7 automated processing.
+            {siteDescription}
           </p>
           <div className="flex flex-wrap items-center gap-4">
             {settings?.whatsapp && (
@@ -46,9 +55,7 @@ export function Footer({ settings: initialSettings }: FooterProps) {
             )}
             {settings?.telegram && (
               <a href={settings.telegram} target="_blank" className="w-10 h-10 rounded-xl bg-surface-elevated flex items-center justify-center text-text-secondary hover:text-primary transition-all border border-border-default hover:shadow-lg hover:shadow-primary/5">
-                <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.14.14-.257.257-.527.257l.184-2.618 4.77-4.312c.207-.184-.045-.286-.32-.103l-5.895 3.714-2.541-.795c-.553-.173-.564-.553.115-.819l9.934-3.829c.46-.17.863.106.71.813z"/>
-                </svg>
+                <Send size={18} />
               </a>
             )}
             {settings?.email && (
@@ -102,16 +109,16 @@ export function Footer({ settings: initialSettings }: FooterProps) {
       </div>
 
       <div className="max-w-7xl mx-auto mt-16 pt-8 border-t border-border-default flex flex-col md:flex-row justify-between items-center gap-6 text-sm text-text-muted">
-        <p>{settings?.footerCopyright || `© ${year} ${siteName}. All rights reserved.`}</p>
+        <p>{copyrightText}</p>
         <div className="flex flex-wrap items-center gap-6 justify-center">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 bg-success rounded-full animate-pulse"></span>
             <span>All systems operational</span>
           </div>
-          {settings?.footerContact && (
+          {settings?.address && (
             <div className="flex items-center gap-2 border-l border-border-default pl-6">
               <Globe size={14} />
-              <span>{settings.footerContact}</span>
+              <span>{settings.address}</span>
             </div>
           )}
         </div>

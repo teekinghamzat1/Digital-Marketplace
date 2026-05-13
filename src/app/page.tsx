@@ -1,6 +1,3 @@
-// @ts-nocheck
-import { Navbar } from "@/components/navbar";
-import { Footer } from "@/components/footer";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { cookies } from "next/headers";
@@ -40,8 +37,7 @@ export default async function Home() {
   const isLoggedIn = cookieStore.has("user_session");
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
+    <>
       
       <main>
         <DynamicHero isLoggedIn={isLoggedIn} />
@@ -114,7 +110,6 @@ export default async function Home() {
         </section>
       </main>
 
-      <Footer />
-    </div>
+    </>
   );
 }

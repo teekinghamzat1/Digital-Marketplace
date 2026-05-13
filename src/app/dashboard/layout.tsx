@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { LayoutDashboard, ShoppingBag, Wallet, Settings, LogOut } from "lucide-react";
-import { Navbar } from "@/components/navbar";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -26,8 +25,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <Navbar />
+    <>
       
       <div className="flex-1 flex max-w-7xl mx-auto w-full">
         {/* Desktop Sidebar (Always visible on large screens) */}
@@ -71,6 +69,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
         </main>
       </div>
-    </div>
+    </>
   );
 }

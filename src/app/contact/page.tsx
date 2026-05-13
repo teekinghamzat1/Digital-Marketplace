@@ -1,7 +1,5 @@
 "use client";
 import { useState } from "react";
-import { Navbar } from "@/components/navbar";
-import { Footer } from "@/components/footer";
 import { Mail, MessageCircle, Clock, Send } from "lucide-react";
 import Swal from "sweetalert2";
 
@@ -56,8 +54,7 @@ export default function ContactPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
+    <>
 
       <main className="max-w-7xl mx-auto px-4 py-16">
         <div className="text-center mb-16">
@@ -205,7 +202,6 @@ export default function ContactPage() {
         </div>
       </main>
 
-      <Footer />
-    </div>
+    </>
   );
 }

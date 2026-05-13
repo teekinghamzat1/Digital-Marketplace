@@ -6,14 +6,16 @@ import { Moon, Sun, LogIn, UserPlus, Menu, X, LayoutDashboard, ShoppingBag, Wall
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 
-export function Navbar() {
+import { SiteSettings } from "@/lib/settings";
+
+export function Navbar({ settings: initialSettings }: { settings?: SiteSettings }) {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
 
-  const [settings, setSettings] = useState<any>(null);
+  const [settings, setSettings] = useState<SiteSettings | undefined>(initialSettings);
 
   useEffect(() => {
     setMounted(true);
@@ -24,17 +26,21 @@ export function Navbar() {
       .then(data => data?.id && setUser(data))
       .catch(() => { });
 
-    // Fetch site settings
-    fetch("/api/settings")
-      .then(res => res.json())
-      .then(data => setSettings(data))
-      .catch(() => { });
-  }, []);
+    // Fetch site settings if not provided
+    if (!initialSettings) {
+      fetch("/api/settings")
+        .then(res => res.json())
+        .then(data => setSettings(data))
+        .catch(() => { });
+    }
+  }, [initialSettings]);
 
   // Close menu when route changes
   useEffect(() => {
     setIsOpen(false);
   }, [pathname]);
+
+  if (pathname.startsWith("/admin")) return null;
 
   const dashboardLinks = [
     { name: "Overview", href: "/dashboard", icon: LayoutDashboard },

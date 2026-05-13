@@ -3,8 +3,6 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useRouter } from "next/navigation";
-import { Navbar } from "@/components/navbar";
-import { Footer } from "@/components/footer";
 import { Search, ShoppingCart, CheckCircle2, AlertCircle } from "lucide-react";
 import Swal from "sweetalert2";
 import { OrderSuccessModal } from "@/components/order-success-modal";
@@ -140,8 +138,7 @@ function ShopContent() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
+    <>
       
       <main className="max-w-7xl mx-auto px-4 py-12">
         <div className="mb-12">
@@ -278,13 +275,12 @@ function ShopContent() {
           </div>
         )}
       </main>
-      <Footer />
       <OrderSuccessModal 
         isOpen={successModal.isOpen} 
         onClose={() => setSuccessModal({ ...successModal, isOpen: false })}
         orderData={successModal.data}
       />
-    </div>
+    </>
   );
 }
 

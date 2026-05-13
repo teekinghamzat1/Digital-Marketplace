@@ -3,28 +3,34 @@
 import React, { useState, useEffect } from "react";
 import { MessageCircle } from "lucide-react";
 import { usePathname } from "next/navigation";
+import { SiteSettings } from "@/lib/settings";
 
-export function WhatsAppButton() {
+interface WhatsAppButtonProps {
+  settings?: SiteSettings;
+}
+
+export function WhatsAppButton({ settings: initialSettings }: WhatsAppButtonProps) {
   const pathname = usePathname();
-  const [whatsappNumber, setWhatsappNumber] = React.useState("+8801313839290");
+  const [settings, setSettings] = useState<SiteSettings | undefined>(initialSettings);
   const [mounted, setMounted] = useState(false);
   const message = "Hello, I have a question about the Marketplace.";
 
   useEffect(() => setMounted(true), []);
 
-  React.useEffect(() => {
-    fetch("/api/settings")
-      .then(res => res.json())
-      .then(data => {
-        if (data.whatsapp) setWhatsappNumber(data.whatsapp);
-      })
-      .catch(() => {});
-  }, []);
+  useEffect(() => {
+    if (!initialSettings) {
+      fetch("/api/settings")
+        .then(res => res.json())
+        .then(data => setSettings(data))
+        .catch(() => {});
+    }
+  }, [initialSettings]);
 
   if (!mounted || pathname.startsWith("/admin")) return null;
+  if (!settings?.whatsapp) return null;
 
   const handleClick = () => {
-    const url = `https://wa.me/${whatsappNumber.replace(/\+/g, "")}?text=${encodeURIComponent(message)}`;
+    const url = `https://wa.me/${settings.whatsapp.replace(/\+/g, "")}?text=${encodeURIComponent(message)}`;
     window.open(url, "_blank");
   };
 
