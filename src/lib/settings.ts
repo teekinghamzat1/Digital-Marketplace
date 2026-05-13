@@ -10,7 +10,16 @@ export * from "./settings-client";
  */
 export async function getSettings(): Promise<SiteSettings> {
   try {
-    const rows = await prisma.siteSetting.findMany();
+    // Add a 5s timeout to the database fetch to prevent hanging the whole app
+    const timeout = new Promise<never>((_, reject) => 
+      setTimeout(() => reject(new Error("Settings fetch timeout")), 5000)
+    );
+
+    const rows = await Promise.race([
+      prisma.siteSetting.findMany(),
+      timeout
+    ]) as any[];
+
     const map = rows.reduce((acc, r) => {
       acc[r.key] = r.value;
       return acc;
@@ -50,10 +59,14 @@ export async function getSettings(): Promise<SiteSettings> {
 
     const socialRaw = map.socialLinks || map.social_links;
     if (socialRaw) {
-      try {
-        settings.socialLinks = JSON.parse(socialRaw);
-      } catch (e) {
-        console.warn("Failed to parse social links JSON:", socialRaw);
+      if (typeof socialRaw === "string" && socialRaw !== "[object Object]") {
+        try {
+          settings.socialLinks = JSON.parse(socialRaw);
+        } catch (e) {
+          console.warn("Failed to parse social links JSON string:", socialRaw);
+        }
+      } else if (typeof socialRaw === "object" && socialRaw !== null) {
+        settings.socialLinks = socialRaw;
       }
     }
 

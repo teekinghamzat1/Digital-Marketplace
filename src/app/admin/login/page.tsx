@@ -3,6 +3,7 @@
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ShieldCheck } from "lucide-react";
+import { AdminStyles } from "@/components/admin/styles";
 
 function AdminLoginContent() {
   const router = useRouter();
@@ -94,6 +95,7 @@ function AdminLoginContent() {
 export default function AdminLoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
+      <AdminStyles />
       <Suspense fallback={<div className="animate-pulse w-full max-w-md h-96 bg-surface-elevated rounded-2xl" />}>
         <AdminLoginContent />
       </Suspense>
