@@ -1,6 +1,6 @@
 import prisma from "@/lib/prisma";
 import { 
-  Tag, Plus, Grap, Trash2, Edit3, 
+  Tag, Plus, GripVertical, Trash2, Edit3, 
   ChevronRight, LayoutGrid, List,
   ArrowUp, ArrowDown, Settings2,
   CheckCircle2, AlertCircle
