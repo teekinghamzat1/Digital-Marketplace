@@ -149,6 +149,7 @@ export default function AdminSettings() {
     email: "", whatsapp: "", telegram: "", footerContact: "", address: "",
     copyrightText: "",
     socialLinks: { facebook: "", twitter: "", instagram: "", linkedin: "" },
+    seoTitle: "", seoDescription: "", seoKeywords: "", ogImage: "",
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -403,6 +404,52 @@ export default function AdminSettings() {
             <div className="space-y-4">
               <p className="text-[11px] font-bold text-text-muted uppercase tracking-widest">Live Multi-Mode Preview</p>
               <ThemePreview colors={settings} settings={settings} />
+            </div>
+          </section>
+        )}
+
+        {activeTab === "seo" && (
+          <section className="vault-card p-8 space-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Field label="Global SEO Title">
+                <input value={settings.seoTitle} onChange={e => set("seoTitle", e.target.value)} className={inputCls} placeholder="Marketplace | Buy Accounts Instantly" />
+              </Field>
+              <Field label="SEO Keywords">
+                <input value={settings.seoKeywords} onChange={e => set("seoKeywords", e.target.value)} className={inputCls} placeholder="digital, marketplace, accounts, verified" />
+              </Field>
+            </div>
+            <Field label="Meta Description">
+              <textarea value={settings.seoDescription} onChange={e => set("seoDescription", e.target.value)} className={`${inputCls} h-24 resize-none`} placeholder="The best platform for purchasing verified digital assets..." />
+            </Field>
+
+            <div className="space-y-4">
+              <p className="text-[11px] font-bold text-text-muted uppercase tracking-widest">Social Share Image (OG Image)</p>
+              <div className="p-6 bg-white/5 border border-white/5 rounded-2xl space-y-4">
+                <div className="h-48 bg-white/5 rounded-xl border-2 border-dashed border-white/10 flex items-center justify-center overflow-hidden relative group">
+                  {settings.ogImage ? (
+                    <>
+                      <img src={settings.ogImage} alt="OG Image" className="w-full h-full object-cover" />
+                      <button type="button" onClick={() => set("ogImage", "")} className="absolute top-4 right-4 p-2 bg-danger text-white rounded-xl opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Trash2 size={16} />
+                      </button>
+                    </>
+                  ) : (
+                    <div className="text-center text-text-muted">
+                      <ImageIcon size={32} className="mx-auto mb-2 opacity-20" />
+                      <p className="text-xs font-bold uppercase tracking-wider">No OG Image Uploaded</p>
+                      <p className="text-[10px] mt-1">Recommended size: 1200x630px</p>
+                    </div>
+                  )}
+                  <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" onChange={(e) => handleLogoUpload("ogImage", e)} />
+                </div>
+              </div>
+            </div>
+
+            <div className="p-4 bg-primary/10 rounded-xl border border-primary/20 flex items-start gap-3">
+              <Search size={16} className="text-primary mt-0.5" />
+              <p className="text-[11px] text-text-secondary leading-relaxed">
+                <span className="font-bold text-primary">SEO Note:</span> Meta tags are automatically injected into the platform's header. Changes may take a few days to reflect on Google search results after saving.
+              </p>
             </div>
           </section>
         )}

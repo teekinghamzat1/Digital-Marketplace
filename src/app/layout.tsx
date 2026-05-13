@@ -24,17 +24,26 @@ export async function generateMetadata(): Promise<Metadata> {
   const settings = await getSettings();
   return {
     title: {
-      default: settings.siteName,
+      default: settings.seoTitle || settings.siteName,
       template: `%s | ${settings.siteName}`,
     },
-    description: settings.siteDescription || "Premium digital account marketplace",
+    description: settings.seoDescription || settings.siteDescription || "Premium digital account marketplace",
+    keywords: settings.seoKeywords || "digital marketplace, verified accounts, buy accounts",
     icons: {
       icon: settings.favicon || "/favicon.ico",
     },
     openGraph: {
-      title: settings.siteName,
-      description: settings.siteDescription,
+      title: settings.seoTitle || settings.siteName,
+      description: settings.seoDescription || settings.siteDescription,
       siteName: settings.siteName,
+      images: settings.ogImage ? [{ url: settings.ogImage }] : [],
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: settings.seoTitle || settings.siteName,
+      description: settings.seoDescription || settings.siteDescription,
+      images: settings.ogImage ? [settings.ogImage] : [],
     }
   };
 }

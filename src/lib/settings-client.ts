@@ -22,6 +22,10 @@ export type SiteSettings = {
     instagram?: string;
     linkedin?: string;
   };
+  seoTitle?: string;
+  seoDescription?: string;
+  seoKeywords?: string;
+  ogImage?: string;
   // Legacy alias kept for backward compat
   footerCopyright: string;
 };
@@ -45,6 +49,10 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   telegram: "",
   copyrightText: `© ${new Date().getFullYear()} Digital Marketplace. All rights reserved.`,
   socialLinks: {},
+  seoTitle: "Digital Marketplace | Buy Verified Accounts Instantly",
+  seoDescription: "The ultimate marketplace for verified digital accounts. Instant delivery, secure vault, and 24/7 support.",
+  seoKeywords: "digital marketplace, verified accounts, buy accounts, instant delivery",
+  ogImage: "",
   footerCopyright: `© ${new Date().getFullYear()} Digital Marketplace. All rights reserved.`,
 };
 
