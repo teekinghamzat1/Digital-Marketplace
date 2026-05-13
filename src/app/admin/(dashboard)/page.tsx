@@ -1,8 +1,10 @@
 import prisma from "@/lib/prisma";
 import { 
   DollarSign, ShoppingBag, Users, MessageSquareWarning,
-  ArrowUpRight, ArrowDownRight, Clock, ExternalLink
+  ArrowUpRight, ArrowDownRight, Clock, ExternalLink,
+  Globe, ShieldCheck
 } from "lucide-react";
+import { getSettings } from "@/lib/settings";
 
 async function getStats() {
   const [totalRevenue, totalOrders, activeUsers, openTickets, recentOrders, recentUsers] = await Promise.all([
@@ -35,7 +37,10 @@ async function getStats() {
 }
 
 export default async function AdminDashboard() {
-  const stats = await getStats();
+  const [stats, settings] = await Promise.all([
+    getStats(),
+    getSettings()
+  ]);
 
   const cards = [
     { label: "TOTAL REVENUE", value: `₦${stats.revenue.toLocaleString()}`, icon: DollarSign, color: "text-primary", bg: "bg-primary/10", border: "border-primary/20", trend: "+12.5%", positive: true },
@@ -46,10 +51,20 @@ export default async function AdminDashboard() {
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold font-syne text-foreground tracking-tight">Overview Dashboard</h1>
-        <p className="text-text-secondary mt-1">Real-time performance metrics and recent activities.</p>
+      {/* Header with Site Info */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold font-syne text-foreground tracking-tight">Dashboard Overview</h1>
+          <p className="text-text-secondary mt-1">Real-time performance for <span className="text-primary font-bold">{settings.siteName}</span></p>
+        </div>
+        <div className="flex items-center gap-4 bg-surface-elevated/50 border border-border-default px-4 py-2 rounded-2xl">
+           <div className="flex items-center gap-2">
+              <div className="w-2 h-2 bg-success rounded-full animate-pulse" />
+              <span className="text-[10px] font-bold text-text-muted uppercase tracking-widest">System Online</span>
+           </div>
+           <div className="w-px h-4 bg-border-default" />
+           <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest">{new Date().toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</p>
+        </div>
       </div>
 
       {/* Stats Grid */}
@@ -89,7 +104,7 @@ export default async function AdminDashboard() {
             </h2>
             <button className="text-xs font-bold text-primary hover:underline">View All</button>
           </div>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto no-scrollbar">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-surface-elevated/50 text-[10px] font-bold text-text-muted uppercase tracking-widest">

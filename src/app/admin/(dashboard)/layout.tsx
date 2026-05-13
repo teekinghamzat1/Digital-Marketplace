@@ -28,7 +28,7 @@ export default async function AdminLayout({
       <AdminHeader adminName={admin.username} />
 
       {/* Main Content Area */}
-      <main className="admin-main">
+      <main className="admin-main overflow-x-hidden">
         <div className="p-4 md:p-8 lg:p-12 max-w-[1600px] mx-auto animate-in fade-in duration-700">
           {children}
         </div>
