@@ -49,8 +49,7 @@ export const DEFAULT_SETTINGS: SiteSettings = {
 
 /**
  * Fetch site settings directly from the DB.
- * No persistent in-memory cache — Next.js handles page-level ISR caching.
- * This ensures admin saves reflect immediately after revalidatePath() is called.
+ * Handles both camelCase and snake_case keys to support legacy or manual DB entries.
  */
 export async function getSettings(): Promise<SiteSettings> {
   try {
@@ -60,32 +59,46 @@ export async function getSettings(): Promise<SiteSettings> {
       return acc;
     }, {} as Record<string, string>);
 
+    // Helper to get value checking both camel and snake case
+    const get = (camel: string, snake: string, fallback: string) => {
+      return map[camel] ?? map[snake] ?? fallback;
+    };
+
     const copyrightText =
-      map.copyrightText ||
-      map.footerCopyright ||
+      get("copyrightText", "copyright_text", "") ||
+      get("footerCopyright", "footer_copyright", "") ||
       DEFAULT_SETTINGS.copyrightText;
 
-    return {
-      siteName: map.siteName || DEFAULT_SETTINGS.siteName,
-      siteDescription: map.siteDescription || DEFAULT_SETTINGS.siteDescription,
-      siteLogo: map.siteLogo || DEFAULT_SETTINGS.siteLogo,
-      favicon: map.favicon || DEFAULT_SETTINGS.favicon,
-      primaryColor: map.primaryColor || DEFAULT_SETTINGS.primaryColor,
-      secondaryColor: map.secondaryColor || DEFAULT_SETTINGS.secondaryColor,
-      accentColor: map.accentColor || DEFAULT_SETTINGS.accentColor,
-      backgroundColor: map.backgroundColor || DEFAULT_SETTINGS.backgroundColor,
-      textColor: map.textColor || DEFAULT_SETTINGS.textColor,
-      footerContact: map.footerContact || DEFAULT_SETTINGS.footerContact,
-      address: map.address || DEFAULT_SETTINGS.address,
-      email: map.email || DEFAULT_SETTINGS.email,
-      whatsapp: map.whatsapp || DEFAULT_SETTINGS.whatsapp,
-      telegram: map.telegram || DEFAULT_SETTINGS.telegram,
+    const settings: SiteSettings = {
+      siteName: get("siteName", "site_name", DEFAULT_SETTINGS.siteName),
+      siteDescription: get("siteDescription", "site_description", DEFAULT_SETTINGS.siteDescription),
+      siteLogo: get("siteLogo", "site_logo", DEFAULT_SETTINGS.siteLogo),
+      favicon: get("favicon", "favicon", DEFAULT_SETTINGS.favicon),
+      primaryColor: get("primaryColor", "primary_color", DEFAULT_SETTINGS.primaryColor),
+      secondaryColor: get("secondaryColor", "secondary_color", DEFAULT_SETTINGS.secondaryColor),
+      accentColor: get("accentColor", "accent_color", DEFAULT_SETTINGS.accentColor),
+      backgroundColor: get("backgroundColor", "background_color", DEFAULT_SETTINGS.backgroundColor),
+      textColor: get("textColor", "text_color", DEFAULT_SETTINGS.textColor),
+      footerContact: get("footerContact", "footer_contact", DEFAULT_SETTINGS.footerContact),
+      address: get("address", "address", DEFAULT_SETTINGS.address),
+      email: get("email", "email", DEFAULT_SETTINGS.email),
+      whatsapp: get("whatsapp", "whatsapp", DEFAULT_SETTINGS.whatsapp),
+      telegram: get("telegram", "telegram", DEFAULT_SETTINGS.telegram),
       copyrightText,
       footerCopyright: copyrightText,
-      socialLinks: map.socialLinks
-        ? JSON.parse(map.socialLinks)
-        : DEFAULT_SETTINGS.socialLinks,
+      socialLinks: DEFAULT_SETTINGS.socialLinks,
     };
+
+    const socialRaw = map.socialLinks || map.social_links;
+    if (socialRaw) {
+      try {
+        settings.socialLinks = JSON.parse(socialRaw);
+      } catch (e) {
+        console.warn("Failed to parse social links JSON:", socialRaw);
+      }
+    }
+
+    return settings;
   } catch (error) {
     console.error("Error fetching settings:", error);
     return DEFAULT_SETTINGS;
@@ -94,7 +107,6 @@ export async function getSettings(): Promise<SiteSettings> {
 
 /**
  * Called by the admin settings API after a successful save.
- * Tells Next.js to re-render all pages on the next request.
  */
 export function invalidateSettingsCache() {
   revalidatePath("/", "layout");
@@ -111,10 +123,18 @@ export async function updateSetting(key: string, value: string) {
 export async function updateMultipleSettings(
   settings: Partial<Record<keyof SiteSettings, any>>
 ) {
-  const promises = Object.entries(settings).map(([key, value]) => {
-    const stringValue =
-      typeof value === "object" ? JSON.stringify(value) : String(value);
-    return updateSetting(key, stringValue);
-  });
-  return Promise.all(promises);
+  const entries = Object.entries(settings);
+  if (entries.length === 0) return [];
+
+  // Use transaction to avoid connection pool exhaustion
+  return prisma.$transaction(
+    entries.map(([key, value]) => {
+      const stringValue = typeof value === "object" ? JSON.stringify(value) : String(value);
+      return prisma.siteSetting.upsert({
+        where: { key },
+        update: { value: stringValue },
+        create: { key, value: stringValue },
+      });
+    })
+  );
 }
