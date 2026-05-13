@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Mail, Globe, Shield, FileText, Phone, Send } from "lucide-react";
 import { usePathname } from "next/navigation";
-import { SiteSettings } from "@/lib/settings";
+import { SiteSettings } from "@/lib/settings-client";
 
 interface FooterProps {
   settings?: SiteSettings;

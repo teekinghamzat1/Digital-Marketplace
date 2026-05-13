@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { SiteSettings } from "@/lib/settings";
+import { SiteSettings } from "@/lib/settings-client";
 
 export function BrandThemeHandler({ settings }: { settings: SiteSettings }) {
   useEffect(() => {

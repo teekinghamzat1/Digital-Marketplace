@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { MessageCircle } from "lucide-react";
 import { usePathname } from "next/navigation";
-import { SiteSettings } from "@/lib/settings";
+import { SiteSettings } from "@/lib/settings-client";
 
 export function WhatsAppButton({ settings: propSettings }: { settings?: SiteSettings }) {
   const pathname = usePathname();

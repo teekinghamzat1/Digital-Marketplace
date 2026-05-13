@@ -1,55 +1,12 @@
 import { prisma } from "./prisma";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
+import { SiteSettings, DEFAULT_SETTINGS } from "./settings-client";
 
-export type SiteSettings = {
-  siteName: string;
-  siteDescription: string;
-  siteLogo: string;
-  favicon: string;
-  primaryColor: string;
-  secondaryColor: string;
-  accentColor: string;
-  backgroundColor: string;
-  textColor: string;
-  footerContact: string;
-  address: string;
-  email: string;
-  whatsapp: string;
-  telegram: string;
-  copyrightText: string;
-  socialLinks: {
-    facebook?: string;
-    twitter?: string;
-    instagram?: string;
-    linkedin?: string;
-  };
-  // Legacy alias kept for backward compat
-  footerCopyright: string;
-};
-
-export const DEFAULT_SETTINGS: SiteSettings = {
-  siteName: "Digital Marketplace",
-  siteDescription: "The most trusted digital marketplace for verified accounts.",
-  siteLogo: "",
-  favicon: "/favicon.ico",
-  primaryColor: "#f97316",
-  secondaryColor: "#fb923c",
-  accentColor: "#f59e0b",
-  backgroundColor: "#ffffff",
-  textColor: "#111827",
-  footerContact: "",
-  address: "",
-  email: "support@marketplace.com",
-  whatsapp: "",
-  telegram: "",
-  copyrightText: `© ${new Date().getFullYear()} Digital Marketplace. All rights reserved.`,
-  socialLinks: {},
-  footerCopyright: `© ${new Date().getFullYear()} Digital Marketplace. All rights reserved.`,
-};
+export * from "./settings-client";
 
 /**
  * Fetch site settings directly from the DB.
- * Handles both camelCase and snake_case keys to support legacy or manual DB entries.
+ * SERVER ONLY
  */
 export async function getSettings(): Promise<SiteSettings> {
   try {
@@ -73,6 +30,8 @@ export async function getSettings(): Promise<SiteSettings> {
       siteName: get("siteName", "site_name", DEFAULT_SETTINGS.siteName),
       siteDescription: get("siteDescription", "site_description", DEFAULT_SETTINGS.siteDescription),
       siteLogo: get("siteLogo", "site_logo", DEFAULT_SETTINGS.siteLogo),
+      logoLight: get("logoLight", "logo_light_url", DEFAULT_SETTINGS.logoLight),
+      logoDark: get("logoDark", "logo_dark_url", DEFAULT_SETTINGS.logoDark),
       favicon: get("favicon", "favicon", DEFAULT_SETTINGS.favicon),
       primaryColor: get("primaryColor", "primary_color", DEFAULT_SETTINGS.primaryColor),
       secondaryColor: get("secondaryColor", "secondary_color", DEFAULT_SETTINGS.secondaryColor),
@@ -107,8 +66,10 @@ export async function getSettings(): Promise<SiteSettings> {
 
 /**
  * Called by the admin settings API after a successful save.
+ * SERVER ONLY
  */
 export function invalidateSettingsCache() {
+  revalidateTag('site-settings', 'max');
   revalidatePath("/", "layout");
 }
 
@@ -126,7 +87,6 @@ export async function updateMultipleSettings(
   const entries = Object.entries(settings);
   if (entries.length === 0) return [];
 
-  // Use transaction to avoid connection pool exhaustion
   return prisma.$transaction(
     entries.map(([key, value]) => {
       const stringValue = typeof value === "object" ? JSON.stringify(value) : String(value);

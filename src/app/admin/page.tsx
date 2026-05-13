@@ -1,152 +1,168 @@
-"use client";
+import prisma from "@/lib/prisma";
+import { 
+  TrendingUp, TrendingDown, DollarSign, 
+  ShoppingBag, Users, MessageSquareWarning,
+  ArrowUpRight, ArrowDownRight, Clock
+} from "lucide-react";
+import { format } from "date-fns";
 
-import { useState, useEffect } from "react";
-import { Users, ShoppingBag, DollarSign, Package, AlertCircle, ArrowUpRight, TrendingUp, History } from "lucide-react";
-import Link from "next/link";
+async function getStats() {
+  const [totalRevenue, totalOrders, activeUsers, openTickets, recentOrders, recentUsers] = await Promise.all([
+    prisma.order.aggregate({
+      _sum: { totalAmount: true },
+      where: { status: 'completed' }
+    }),
+    prisma.order.count(),
+    prisma.user.count({ where: { isActive: true } }),
+    prisma.contactTicket.count({ where: { status: 'open' } }),
+    prisma.order.findMany({
+      take: 5,
+      orderBy: { createdAt: 'desc' },
+      include: { user: true, product: true }
+    }),
+    prisma.user.findMany({
+      take: 5,
+      orderBy: { createdAt: 'desc' }
+    })
+  ]);
 
-export default function AdminOverview() {
-  const [data, setData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  return {
+    revenue: Number(totalRevenue._sum.totalAmount || 0),
+    orders: totalOrders,
+    users: activeUsers,
+    tickets: openTickets,
+    recentOrders,
+    recentUsers
+  };
+}
 
-  useEffect(() => {
-    fetch("/api/admin/stats", { credentials: 'include' })
-      .then(res => res.json())
-      .then(resData => {
-        setData(resData);
-        setLoading(false);
-      });
-  }, []);
+export default async function AdminDashboard() {
+  const stats = await getStats();
 
-  if (loading) return <div className="animate-pulse space-y-8">
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-      {[...Array(4)].map((_, i) => <div key={i} className="h-32 bg-surface-elevated rounded-xl"></div>)}
-    </div>
-    <div className="h-96 bg-surface-elevated rounded-xl"></div>
-  </div>;
+  const cards = [
+    { label: "TOTAL REVENUE", value: `₦${stats.revenue.toLocaleString()}`, icon: DollarSign, color: "text-primary", bg: "bg-primary/10", border: "border-primary/20", trend: "+12.5%", positive: true },
+    { label: "TOTAL ORDERS", value: stats.orders, icon: ShoppingBag, color: "text-blue-400", bg: "bg-blue-400/10", border: "border-blue-400/20", trend: "+5.2%", positive: true },
+    { label: "ACTIVE USERS", value: stats.users, icon: Users, color: "text-green-400", bg: "bg-green-400/10", border: "border-green-400/20", trend: "+8.1%", positive: true },
+    { label: "OPEN TICKETS", value: stats.tickets, icon: MessageSquareWarning, color: "text-danger", bg: "bg-danger/10", border: "border-danger/20", trend: "-2", positive: false, isUrgent: stats.tickets > 0 }
+  ];
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold font-[family-name:var(--font-syne)] text-foreground">
-          Dashboard Overview
-        </h1>
-        <p className="text-text-secondary mt-1">Marketplace performance and sales tracking.</p>
+        <h1 className="text-3xl font-bold font-syne text-white tracking-tight">Overview Dashboard</h1>
+        <p className="text-text-secondary mt-1">Real-time performance metrics and recent activities.</p>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="vault-card p-6 border-border-default">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
-              <DollarSign size={20} />
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+        {cards.map((card, i) => (
+          <div key={i} className="vault-card p-5 md:p-6 relative group overflow-hidden">
+            <div className={`absolute bottom-0 left-0 h-1 w-full opacity-30 ${card.color.replace('text', 'bg')}`} />
+            <div className="flex items-start justify-between mb-4">
+              <div className={`w-12 h-12 ${card.bg} rounded-xl flex items-center justify-center ${card.color}`}>
+                <card.icon size={24} />
+              </div>
+              <div className={`flex items-center gap-1 text-xs font-bold ${card.positive ? 'text-success' : 'text-danger'}`}>
+                {card.positive ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
+                {card.trend}
+              </div>
             </div>
-            <h2 className="text-sm font-bold text-text-secondary uppercase tracking-wider">Total Revenue</h2>
+            <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] mb-1">{card.label}</p>
+            <h3 className="text-2xl md:text-3xl font-bold text-white tracking-tight">{card.value}</h3>
+            {card.isUrgent && (
+              <span className="absolute top-4 right-4 flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-danger opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-danger"></span>
+              </span>
+            )}
           </div>
-          <p className="text-3xl font-black text-foreground">₦{Number(data.totalRevenue).toLocaleString()}</p>
-          <p className="text-xs text-success font-bold mt-2">Lifetime Sales</p>
-        </div>
-
-        <div className="vault-card p-6 border-border-default">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-10 h-10 rounded-lg bg-success/10 text-success flex items-center justify-center">
-              <ShoppingBag size={20} />
-            </div>
-            <h2 className="text-sm font-bold text-text-secondary uppercase tracking-wider">Transactions</h2>
-          </div>
-          <p className="text-3xl font-black text-foreground">{data.totalTransactions}</p>
-          <p className="text-xs text-text-muted mt-2">Successful purchases</p>
-        </div>
-
-        <div className="vault-card p-6 border-border-default">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-10 h-10 rounded-lg bg-blue-500/10 text-blue-500 flex items-center justify-center">
-              <Users size={20} />
-            </div>
-            <h2 className="text-sm font-bold text-text-secondary uppercase tracking-wider">Total Users</h2>
-          </div>
-          <p className="text-3xl font-black text-foreground">{data.totalUsers}</p>
-          <p className="text-xs text-text-muted mt-2">Registered accounts</p>
-        </div>
-
-        <div className="vault-card p-6 border-border-default">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-10 h-10 rounded-lg bg-warning/10 text-warning flex items-center justify-center">
-              <Package size={20} />
-            </div>
-            <h2 className="text-sm font-bold text-text-secondary uppercase tracking-wider">Products</h2>
-          </div>
-          <p className="text-3xl font-black text-foreground">{data.activeProducts}</p>
-          <p className="text-xs text-text-muted mt-2">Active listings</p>
-        </div>
+        ))}
       </div>
 
-      {/* Recent Transactions */}
-      <div className="vault-card p-6 border-border-default">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <History className="text-primary" size={24} />
-            <h2 className="text-xl font-bold text-foreground font-[family-name:var(--font-syne)]">Recent Transactions</h2>
+      {/* Charts & Activity Split */}
+      <div className="grid grid-cols-1 xl:grid-cols-5 gap-6">
+        {/* Recent Orders Table */}
+        <div className="xl:col-span-3 vault-card overflow-hidden">
+          <div className="p-6 border-b border-white/5 flex items-center justify-between">
+            <h2 className="text-lg font-bold font-syne flex items-center gap-2">
+              <ShoppingBag size={20} className="text-primary" />
+              Recent Orders
+            </h2>
+            <button className="text-xs font-bold text-primary hover:underline">View All</button>
           </div>
-          <Link href="/admin/transactions" className="text-sm font-bold text-primary hover:underline">View All</Link>
-        </div>
-        
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead className="bg-surface-elevated border-b border-border-default">
-              <tr>
-                <th className="px-6 py-4 text-xs font-bold text-text-muted uppercase tracking-wider">Date</th>
-                <th className="px-6 py-4 text-xs font-bold text-text-muted uppercase tracking-wider">User</th>
-                <th className="px-6 py-4 text-xs font-bold text-text-muted uppercase tracking-wider">Product</th>
-                <th className="px-6 py-4 text-xs font-bold text-text-muted uppercase tracking-wider">Tier</th>
-                <th className="px-6 py-4 text-xs font-bold text-text-muted uppercase tracking-wider">Amount</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border-default">
-              {data.transactions.map((tx: any) => (
-                <tr key={tx.id} className="hover:bg-surface-elevated/50">
-                  <td className="px-6 py-4 text-sm text-text-secondary">
-                    {new Date(tx.createdAt).toLocaleDateString()}
-                  </td>
-                  <td className="px-6 py-4 text-sm font-bold text-foreground">{tx.user.email}</td>
-                  <td className="px-6 py-4 text-sm text-text-secondary">{tx.product.name}</td>
-                  <td className="px-6 py-4">
-                    <span className="px-2 py-1 bg-primary/10 text-primary text-xs font-bold rounded">
-                      {tx.pricingTier.label} ({tx.pricingTier.quantity} Units)
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-sm font-black text-foreground">₦{Number(tx.amount).toLocaleString()}</td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-white/2 text-[10px] font-bold text-text-muted uppercase tracking-widest">
+                  <th className="px-6 py-4">Order ID</th>
+                  <th className="px-6 py-4">Customer</th>
+                  <th className="px-6 py-4">Product</th>
+                  <th className="px-6 py-4">Status</th>
+                  <th className="px-6 py-4 text-right">Amount</th>
                 </tr>
-              ))}
-              {data.transactions.length === 0 && (
-                <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-text-muted italic">No transactions yet.</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {stats.recentOrders.map((order) => (
+                  <tr key={order.id} className="group hover:bg-white/2 transition-colors">
+                    <td className="px-6 py-4 font-mono text-xs text-primary">#{order.id.slice(0, 8)}</td>
+                    <td className="px-6 py-4">
+                      <p className="text-sm font-medium text-foreground">{order.user.username}</p>
+                      <p className="text-[10px] text-text-muted">{order.user.email}</p>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-text-secondary">{order.product.name}</td>
+                    <td className="px-6 py-4">
+                      <span className={`status-badge ${
+                        order.status === 'completed' ? 'bg-success/15 text-success' : 
+                        order.status === 'pending' ? 'bg-warning/15 text-warning' : 'bg-danger/15 text-danger'
+                      }`}>
+                        {order.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-right font-bold text-white">₦{Number(order.totalAmount).toLocaleString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {stats.recentOrders.length === 0 && (
+            <div className="p-12 text-center text-text-muted">
+              <ShoppingBag size={48} className="mx-auto mb-4 opacity-10" />
+              <p>No orders recorded yet.</p>
+            </div>
+          )}
         </div>
-      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="vault-card p-6 bg-gradient-to-br from-primary/10 to-transparent border-primary/20">
-          <h3 className="text-xl font-bold text-foreground mb-4">Quick Management</h3>
-          <div className="grid grid-cols-2 gap-4">
-            <Link href="/admin/products" className="bg-surface-elevated p-4 rounded-xl border border-border-default hover:border-primary/50 transition-colors">
-              <Package size={20} className="mb-2 text-primary" />
-              <p className="font-bold text-sm">Products & Tiers</p>
-            </Link>
-            <Link href="/admin/categories" className="bg-surface-elevated p-4 rounded-xl border border-border-default hover:border-primary/50 transition-colors">
-              <ShoppingBag size={20} className="mb-2 text-warning" />
-              <p className="font-bold text-sm">Categories</p>
-            </Link>
-            <Link href="/admin/users" className="bg-surface-elevated p-4 rounded-xl border border-border-default hover:border-primary/50 transition-colors">
-              <Users size={20} className="mb-2 text-blue-400" />
-              <p className="font-bold text-sm">Users</p>
-            </Link>
-            <Link href="/admin/settings" className="bg-surface-elevated p-4 rounded-xl border border-border-default hover:border-primary/50 transition-colors">
-              <AlertCircle size={20} className="mb-2 text-error" />
-              <p className="font-bold text-sm">Settings</p>
-            </Link>
+        {/* Recent Users List */}
+        <div className="xl:col-span-2 vault-card">
+          <div className="p-6 border-b border-white/5 flex items-center justify-between">
+            <h2 className="text-lg font-bold font-syne flex items-center gap-2">
+              <Users size={20} className="text-green-400" />
+              New Signups
+            </h2>
+            <Clock size={16} className="text-text-muted" />
+          </div>
+          <div className="p-6 space-y-6">
+            {stats.recentUsers.map((user) => (
+              <div key={user.id} className="flex items-center gap-4 group">
+                <div className="w-12 h-12 bg-surface-raised rounded-full flex items-center justify-center text-primary font-bold border border-white/5 group-hover:border-primary/50 transition-all">
+                  {user.username.slice(0, 2).toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-foreground truncate">{user.username}</p>
+                  <p className="text-[10px] text-text-muted truncate">{user.email}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-bold text-white">₦{Number(user.walletBalance).toLocaleString()}</p>
+                  <p className="text-[10px] text-text-muted">Balance</p>
+                </div>
+              </div>
+            ))}
+            {stats.recentUsers.length === 0 && (
+              <div className="text-center py-8 text-text-muted">
+                <p>No users found.</p>
+              </div>
+            )}
           </div>
         </div>
       </div>
