@@ -1,8 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
 import { Gavel } from "lucide-react";
-import { Navbar } from "@/components/navbar";
-import { Footer } from "@/components/footer";
 
 export default function TermsAndConditionsPage() {
   const [page, setPage] = useState<any>(null);
@@ -18,6 +16,7 @@ export default function TermsAndConditionsPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  return (
     <div className="min-h-screen bg-background">
 
       <main className="max-w-4xl mx-auto px-4 py-16">
