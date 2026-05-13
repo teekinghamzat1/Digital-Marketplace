@@ -73,7 +73,7 @@ export function DynamicHero({ isLoggedIn }: { isLoggedIn: boolean }) {
   };
 
   return (
-    <section className="max-w-7xl mx-auto px-4 pt-24 pb-24 flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
+    <section className="max-w-7xl mx-auto px-4 pt-24 pb-24 flex flex-col lg:flex-row items-center gap-12 lg:gap-20 overflow-hidden">
       <div className="flex-1 text-center lg:text-left animate-in fade-in slide-in-from-left-8 duration-700">
         <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full font-bold text-sm mb-6">
           <Zap size={16} />

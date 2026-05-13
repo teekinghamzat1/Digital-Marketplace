@@ -53,12 +53,15 @@
 
   html {
     transition: background-color 0.3s ease, color 0.3s ease;
+    overflow-x: hidden;
   }
 
   body {
     background-color: var(--bg-default);
     color: var(--text-primary);
     font-family: var(--font-dm-sans), sans-serif;
+    overflow-x: hidden;
+    width: 100%;
   }
 
   h1, h2, h3, h4, h5, h6 {
