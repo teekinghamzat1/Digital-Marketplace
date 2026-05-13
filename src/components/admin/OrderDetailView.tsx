@@ -117,12 +117,12 @@ export function OrderDetailView({ orderId, onClose }: OrderDetailProps) {
              <div className="flex items-center justify-between px-2">
                 <h4 className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] flex items-center gap-2">
                    <Key size={14} className="text-primary" />
-                   Delivered Assets ({order.items?.length || 0})
+                   Delivered Assets ({order.productItems?.length || 0})
                 </h4>
              </div>
              
              <div className="space-y-3">
-                {order.items?.map((item: any, idx: number) => (
+                {order.productItems?.map((item: any, idx: number) => (
                   <div key={item.id} className="group bg-background border border-border-default rounded-2xl p-4 flex items-center justify-between hover:border-primary transition-all shadow-sm">
                      <div className="min-w-0">
                         <p className="text-[10px] font-bold text-text-muted uppercase mb-1">Asset #{idx + 1}</p>
@@ -136,7 +136,7 @@ export function OrderDetailView({ orderId, onClose }: OrderDetailProps) {
                      </button>
                   </div>
                 ))}
-                {(!order.items || order.items.length === 0) && (
+                {(!order.productItems || order.productItems.length === 0) && (
                   <div className="text-center py-10 border border-dashed border-border-default rounded-2xl">
                      <AlertCircle size={32} className="mx-auto mb-2 opacity-10 text-foreground" />
                      <p className="text-xs text-text-muted font-bold uppercase tracking-widest">No assets attached to this order.</p>

@@ -16,7 +16,7 @@ export async function GET(
       include: {
         user: { select: { username: true, email: true } },
         product: { select: { name: true } },
-        items: true // This will include the ProductItem(s) sold in this order
+        productItems: true // This will include the ProductItem(s) sold in this order
       }
     });
 
