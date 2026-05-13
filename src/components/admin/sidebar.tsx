@@ -6,9 +6,10 @@ import { usePathname, useRouter } from "next/navigation";
 import { 
   LayoutDashboard, ShoppingBag, Tag, Package, 
   Users, MessageSquareWarning, Settings2, LogOut,
-  Menu, X, ChevronRight, User
+  Menu, X, ChevronRight, User, Sun, Moon
 } from "lucide-react";
-import { SiteSettings } from "@/lib/settings-client";
+import { SiteSettings, getLogoForMode } from "@/lib/settings-client";
+import { useTheme } from "@/context/ThemeContext";
 
 interface AdminSidebarProps {
   settings?: SiteSettings;
@@ -18,6 +19,7 @@ interface AdminSidebarProps {
 export function AdminSidebar({ settings, adminName = "Admin" }: AdminSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const { theme, toggleTheme } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(true);
 
@@ -25,6 +27,8 @@ export function AdminSidebar({ settings, adminName = "Admin" }: AdminSidebarProp
   useEffect(() => {
     setIsOpen(false);
   }, [pathname]);
+
+  const activeLogo = settings ? getLogoForMode(settings, theme) : null;
 
   const navItems = [
     { label: "MAIN NAVIGATION", type: "label" },
@@ -81,8 +85,19 @@ export function AdminSidebar({ settings, adminName = "Admin" }: AdminSidebarProp
     <>
       {/* Mobile Header Bar */}
       <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-background border-b border-border-default flex items-center justify-between px-4 z-[100]">
-        <Link href="/admin" className="text-xl font-bold font-syne text-primary truncate max-w-[200px]">
-          {settings?.siteName || "Admin Dashboard"}
+        <Link href="/admin" className="flex items-center h-10">
+          {activeLogo ? (
+            <img 
+              src={activeLogo} 
+              alt={settings?.siteName} 
+              className="h-8 md:h-10 w-auto object-contain max-w-[180px]"
+              style={{ display: 'block' }}
+            />
+          ) : (
+            <span className="text-xl font-bold font-syne text-primary truncate max-w-[200px]">
+              {settings?.siteName || "Admin Dashboard"}
+            </span>
+          )}
         </Link>
         <button 
           onClick={() => setIsOpen(true)}
@@ -109,14 +124,25 @@ export function AdminSidebar({ settings, adminName = "Admin" }: AdminSidebarProp
         <div className="flex flex-col h-full overflow-hidden">
           {/* Logo Section */}
           <div className="h-20 flex items-center justify-between px-6 border-b border-border-default shrink-0">
-            <Link href="/admin" className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white shrink-0">
-                <LayoutDashboard size={18} />
-              </div>
-              {isExpanded && (
-                <span className="font-bold text-lg text-foreground font-syne tracking-tight truncate max-w-[160px]">
-                  {settings?.siteName || "Admin Panel"}
-                </span>
+            <Link href="/admin" className="flex items-center h-12 overflow-hidden">
+              {activeLogo ? (
+                <img 
+                  src={activeLogo} 
+                  alt={settings?.siteName} 
+                  className="h-full w-auto object-contain max-w-[200px]"
+                  style={{ display: 'block' }}
+                />
+              ) : (
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white shrink-0">
+                    <LayoutDashboard size={18} />
+                  </div>
+                  {isExpanded && (
+                    <span className="font-bold text-lg text-foreground font-syne tracking-tight truncate max-w-[160px]">
+                      {settings?.siteName || "Admin Panel"}
+                    </span>
+                  )}
+                </div>
               )}
             </Link>
             <button 
@@ -134,8 +160,22 @@ export function AdminSidebar({ settings, adminName = "Admin" }: AdminSidebarProp
             ))}
           </nav>
 
-          {/* Bottom Profile Section */}
-          <div className="p-4 mt-auto border-t border-border-default bg-surface-elevated/30">
+          {/* Bottom Section */}
+          <div className="p-4 mt-auto border-t border-border-default bg-surface-elevated/30 space-y-3">
+            {/* Theme Toggle in Sidebar */}
+            {isExpanded && (
+              <button
+                onClick={toggleTheme}
+                className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all hover:bg-white/5 text-text-secondary hover:text-foreground"
+              >
+                {theme === 'dark' ? (
+                  <><Sun size={17} className="text-primary" /> <span>Light Mode</span></>
+                ) : (
+                  <><Moon size={17} className="text-primary" /> <span>Dark Mode</span></>
+                )}
+              </button>
+            )}
+
             <div className={`flex items-center gap-3 p-3 rounded-2xl bg-background border border-border-default ${!isExpanded && 'lg:justify-center'}`}>
               <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary shrink-0">
                 <User size={20} />
@@ -150,7 +190,7 @@ export function AdminSidebar({ settings, adminName = "Admin" }: AdminSidebarProp
             {isExpanded && (
               <button 
                 onClick={handleLogout}
-                className="w-full mt-3 flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-bold text-sm text-danger bg-danger/10 hover:bg-danger/20 transition-all"
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-bold text-sm text-danger bg-danger/10 hover:bg-danger/20 transition-all"
               >
                 <LogOut size={18} />
                 Logout Session

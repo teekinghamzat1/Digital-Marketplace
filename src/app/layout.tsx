@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Syne, DM_Sans } from "next/font/google";
 import "./globals.css";
-import { ThemeProvider } from "@/components/theme-provider";
+import { ThemeProvider } from "@/context/ThemeContext";
 import { MobileFooterNav } from "@/components/mobile-footer-nav";
 import { WhatsAppButton } from "@/components/whatsapp-button";
 import { BrandThemeHandler } from "@/components/brand-theme-handler";
@@ -70,13 +70,7 @@ export default async function RootLayout({
     >
       <head />
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
-        <ThemeProvider
-          attribute="data-theme"
-          defaultTheme="light"
-          enableSystem
-          enableColorScheme={false}
-          disableTransitionOnChange
-        >
+        <ThemeProvider>
           <UserProvider>
             <BrandThemeHandler settings={settings} />
             <Navbar settings={settings} />

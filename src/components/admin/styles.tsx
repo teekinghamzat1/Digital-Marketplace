@@ -29,16 +29,15 @@ export function AdminStyles() {
       }
       
       .vault-card {
-        background: var(--background-surface, #ffffff);
-        border: 1px solid var(--border-default, rgba(0, 0, 0, 0.08));
+        background: var(--surface);
+        border: 1px solid var(--border-default);
         border-radius: 1rem;
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
       }
+      
       .dark .vault-card {
-        --background-surface: #1a1a1a;
-        --border-default: rgba(255, 255, 255, 0.08);
-        box-shadow: none;
+        background: var(--surface);
+        border-color: var(--border-default);
       }
       
       .vault-card:hover {

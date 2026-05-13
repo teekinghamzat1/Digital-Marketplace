@@ -4,9 +4,10 @@ import { useState, useEffect, useRef } from "react";
 import {
   Settings, Save, Globe, Palette, Phone, Share2, 
   Image as ImageIcon, X, Eye, Check, Loader2,
-  Shield, Search, Trash2, Upload
+  Shield, Search, Trash2, Upload, Sun, Moon
 } from "lucide-react";
 import { SiteSettings, getLogoForMode } from "@/lib/settings-client";
+import { useTheme } from "@/context/ThemeContext";
 
 // ─── Tiny inline color picker swatch ────────────────────────────────────────
 function ColorSwatch({
@@ -84,19 +85,19 @@ function ThemePreview({ colors, settings }: { colors: Record<string, string>, se
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {/* Light Preview */}
-      <div className="vault-card bg-white p-4 space-y-4">
-        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Light Mode Preview</p>
-        <div className="flex items-center justify-between border-b pb-3">
-          <div className="h-6 w-24 bg-slate-100 rounded flex items-center justify-center overflow-hidden">
+      <div className="vault-card bg-white p-4 space-y-4 border-gray-200 shadow-sm">
+        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Light Mode Preview</p>
+        <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+          <div className="h-6 w-24 bg-gray-50 rounded flex items-center justify-center overflow-hidden">
              {getLogoForMode(settings, 'light') ? (
                <img src={getLogoForMode(settings, 'light')!} alt="Logo" className="h-full w-auto object-contain" />
              ) : (
-               <span className="text-[10px] font-bold text-slate-400">{settings.siteName}</span>
+               <span className="text-[10px] font-bold text-gray-400">{settings.siteName}</span>
              )}
           </div>
           <div className="flex gap-2">
-             <div className="w-4 h-4 rounded-full bg-slate-100" />
-             <div className="w-8 h-4 rounded-md bg-slate-100" />
+             <div className="w-4 h-4 rounded-full bg-gray-100" />
+             <div className="w-8 h-4 rounded-md bg-gray-100" />
           </div>
         </div>
         <button className="w-full py-2 rounded-lg text-sm font-bold text-white shadow-lg" style={{ backgroundColor: colors.primaryColor }}>
@@ -105,7 +106,7 @@ function ThemePreview({ colors, settings }: { colors: Record<string, string>, se
       </div>
 
       {/* Dark Preview */}
-      <div className="vault-card bg-[#0f0f0f] p-4 space-y-4 border-white/10">
+      <div className="vault-card bg-[#0A0A12] p-4 space-y-4 border-white/5">
         <p className="text-[10px] font-black text-white/20 uppercase tracking-widest mb-2">Dark Mode Preview</p>
         <div className="flex items-center justify-between border-b border-white/5 pb-3">
           <div className="h-6 w-24 bg-white/5 rounded flex items-center justify-center overflow-hidden">
@@ -141,6 +142,7 @@ const inputCls = "w-full bg-surface-elevated border border-border-default rounde
 
 // ─── Main Component ────────────────────────────────────────────────────────────
 export default function AdminSettings() {
+  const { theme } = useTheme();
   const [activeTab, setActiveTab] = useState<string>("branding");
   const [settings, setSettings] = useState<any>({
     siteName: "", siteDescription: "", siteLogo: "", logoLight: "", logoDark: "", favicon: "",
@@ -287,15 +289,26 @@ export default function AdminSettings() {
 
             {/* Dual Logo Upload */}
             <div className="space-y-6">
-               <p className="text-[11px] font-bold text-text-muted uppercase tracking-widest">Brand Logos</p>
+               <div className="flex items-center justify-between">
+                  <p className="text-[11px] font-bold text-text-muted uppercase tracking-widest">Brand Logos</p>
+                  <div className="flex items-center gap-2 px-3 py-1 bg-surface-elevated border border-border-default rounded-full">
+                     {theme === 'dark' ? <Moon size={12} className="text-primary" /> : <Sun size={12} className="text-primary" />}
+                     <span className="text-[10px] font-bold text-text-secondary uppercase">
+                        Currently Serving: <span className="text-foreground">{theme === 'dark' ? 'Light Logo (on dark)' : 'Dark Logo (on light)'}</span>
+                     </span>
+                  </div>
+               </div>
                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* Light Logo */}
-                  <div className="p-6 bg-white/5 border border-white/5 rounded-2xl space-y-4">
+                  {/* Light Logo - Optimized for Dark Backgrounds */}
+                  <div className={`p-6 border rounded-2xl space-y-4 transition-all ${theme === 'dark' ? 'bg-primary/5 border-primary/20 ring-1 ring-primary/20' : 'bg-white/5 border-white/5'}`}>
                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-foreground">Light Mode Logo</span>
-                        <span className="text-[10px] text-text-muted">Shown on dark backgrounds</span>
+                        <div className="flex items-center gap-2">
+                           <span className="text-xs font-bold text-foreground">Light Mode Logo</span>
+                           {theme === 'dark' && <span className="px-1.5 py-0.5 bg-primary text-white text-[8px] font-black rounded-md uppercase tracking-tighter">Active Now</span>}
+                        </div>
+                        <span className="text-[10px] text-text-muted italic">Best on dark headers</span>
                      </div>
-                     <div className="h-32 bg-white/5 rounded-xl border-2 border-dashed border-white/10 flex items-center justify-center overflow-hidden relative group">
+                     <div className="h-32 bg-[#0A0A12] rounded-xl border-2 border-dashed border-white/10 flex items-center justify-center overflow-hidden relative group">
                         {settings.logoLight ? (
                            <>
                              <img src={settings.logoLight} alt="Light logo" className="h-full w-auto object-contain p-4" />
@@ -306,20 +319,23 @@ export default function AdminSettings() {
                         ) : (
                            <div className="text-center text-text-muted">
                               <ImageIcon size={24} className="mx-auto mb-2 opacity-20" />
-                              <p className="text-[10px] font-bold">No Image</p>
+                              <p className="text-[10px] font-bold uppercase tracking-tighter">Upload Light Logo</p>
                            </div>
                         )}
                         <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" onChange={(e) => handleLogoUpload("logoLight", e)} />
                      </div>
                   </div>
 
-                  {/* Dark Logo */}
-                  <div className="p-6 bg-white/5 border border-white/5 rounded-2xl space-y-4">
+                  {/* Dark Logo - Optimized for Light Backgrounds */}
+                  <div className={`p-6 border rounded-2xl space-y-4 transition-all ${theme === 'light' ? 'bg-primary/5 border-primary/20 ring-1 ring-primary/20' : 'bg-white/5 border-white/5'}`}>
                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-foreground">Dark Mode Logo</span>
-                        <span className="text-[10px] text-text-muted">Shown on light backgrounds</span>
+                        <div className="flex items-center gap-2">
+                           <span className="text-xs font-bold text-foreground">Dark Mode Logo</span>
+                           {theme === 'light' && <span className="px-1.5 py-0.5 bg-primary text-white text-[8px] font-black rounded-md uppercase tracking-tighter">Active Now</span>}
+                        </div>
+                        <span className="text-[10px] text-text-muted italic">Best on white/light headers</span>
                      </div>
-                     <div className="h-32 bg-white/5 rounded-xl border-2 border-dashed border-white/10 flex items-center justify-center overflow-hidden relative group">
+                     <div className="h-32 bg-white rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center overflow-hidden relative group">
                         {settings.logoDark ? (
                            <>
                              <img src={settings.logoDark} alt="Dark logo" className="h-full w-auto object-contain p-4" />
@@ -328,9 +344,9 @@ export default function AdminSettings() {
                              </button>
                            </>
                         ) : (
-                           <div className="text-center text-text-muted">
+                           <div className="text-center text-gray-400">
                               <ImageIcon size={24} className="mx-auto mb-2 opacity-20" />
-                              <p className="text-[10px] font-bold">No Image</p>
+                              <p className="text-[10px] font-bold uppercase tracking-tighter">Upload Dark Logo</p>
                            </div>
                         )}
                         <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" onChange={(e) => handleLogoUpload("logoDark", e)} />
@@ -340,7 +356,7 @@ export default function AdminSettings() {
                <div className="p-4 bg-primary/10 rounded-xl border border-primary/20 flex items-start gap-3">
                   <ImageIcon size={16} className="text-primary mt-0.5" />
                   <p className="text-[11px] text-text-secondary leading-relaxed">
-                     <span className="font-bold text-primary">Pro Tip:</span> If a specific variant is missing, the other will be used as a fallback. For transparent headers, upload a PNG with contrasting colors.
+                     <span className="font-bold text-primary">Pro Tip:</span> The <span className="font-bold">Light Mode Logo</span> is automatically used when the visitor is in dark mode (and vice versa) to ensure maximum contrast and visibility.
                   </p>
                </div>
             </div>

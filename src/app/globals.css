@@ -34,7 +34,7 @@
     --warning: #F59E0B;
   }
 
-  [data-theme="dark"] {
+  .dark {
     --bg-default: #0A0A12;
     --surface: #13131F;
     --surface-elevated: #1C1C2E;
@@ -74,7 +74,7 @@
     @apply bg-surface border border-border-default rounded-xl transition-all duration-300;
   }
 
-  [data-theme="dark"] .vault-card {
+  .dark .vault-card {
     @apply bg-surface/50 backdrop-blur-md;
   }
 }

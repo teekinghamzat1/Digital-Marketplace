@@ -1,11 +1,11 @@
 "use client";
 
-import { useTheme } from "next-themes";
+import { useTheme } from "@/context/ThemeContext";
 import { Sun, Moon, Bell, Search, Settings } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export function AdminHeader({ adminName }: { adminName?: string }) {
-  const { theme, setTheme, resolvedTheme } = useTheme();
+  const { theme, toggleTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => setMounted(true), []);
@@ -29,11 +29,11 @@ export function AdminHeader({ adminName }: { adminName?: string }) {
         <div className="flex items-center gap-2 md:gap-4 ml-auto">
           {/* Theme Toggle */}
           <button 
-            onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+            onClick={toggleTheme}
             className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-surface-elevated text-text-secondary hover:text-primary transition-all border border-transparent hover:border-border-default"
             title="Toggle Theme"
           >
-            {resolvedTheme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
+            {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
           </button>
 
           {/* Notifications */}
