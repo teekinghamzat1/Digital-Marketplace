@@ -5,17 +5,15 @@ import { useTheme } from "next-themes";
 import { Moon, Sun, LogIn, UserPlus, Menu, X, LayoutDashboard, ShoppingBag, Wallet, Settings, LogOut, Phone, Shield, FileText, Send, User } from "lucide-react";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-
 import { SiteSettings } from "@/lib/settings";
 
-export function Navbar({ settings: initialSettings }: { settings?: SiteSettings }) {
+export function Navbar({ settings: propSettings }: { settings?: SiteSettings }) {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [isOpen, setIsOpen] = useState(false);
+  const [fetchedSettings, setFetchedSettings] = useState<SiteSettings | undefined>(undefined);
   const pathname = usePathname();
-
-  const [settings, setSettings] = useState<SiteSettings | undefined>(initialSettings);
 
   useEffect(() => {
     setMounted(true);
@@ -27,13 +25,15 @@ export function Navbar({ settings: initialSettings }: { settings?: SiteSettings 
       .catch(() => { });
 
     // Fetch site settings if not provided
-    if (!initialSettings) {
+    if (!propSettings) {
       fetch("/api/settings")
         .then(res => res.json())
-        .then(data => setSettings(data))
+        .then(data => setFetchedSettings(data))
         .catch(() => { });
     }
-  }, [initialSettings]);
+  }, [propSettings]);
+
+  const settings = propSettings || fetchedSettings;
 
   // Close menu when route changes
   useEffect(() => {
@@ -68,7 +68,7 @@ export function Navbar({ settings: initialSettings }: { settings?: SiteSettings 
                 <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white">
                   <ShoppingBag size={18} />
                 </div>
-                <span>{settings?.siteName || "Sumon Mondal Logs"}</span>
+                <span>{settings?.siteName || "Digital Marketplace"}</span>
               </>
             )}
           </Link>

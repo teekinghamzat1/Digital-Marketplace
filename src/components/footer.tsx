@@ -10,25 +10,26 @@ interface FooterProps {
   settings?: SiteSettings;
 }
 
-export function Footer({ settings: initialSettings }: FooterProps) {
+export function Footer({ settings: propSettings }: FooterProps) {
   const pathname = usePathname();
-  const [settings, setSettings] = useState<SiteSettings | undefined>(initialSettings);
-  const year = new Date().getFullYear();
+  const [fetchedSettings, setFetchedSettings] = useState<SiteSettings | undefined>(undefined);
 
   useEffect(() => {
-    if (!initialSettings) {
+    if (!propSettings) {
       fetch("/api/settings")
         .then(res => res.json())
-        .then(data => setSettings(data))
+        .then(data => setFetchedSettings(data))
         .catch(err => console.error("Footer settings fetch failed:", err));
     }
-  }, [initialSettings]);
+  }, [propSettings]);
+
+  const settings = propSettings || fetchedSettings;
 
   if (pathname.startsWith("/admin")) return null;
 
   const siteName = settings?.siteName || "Digital Marketplace";
   const siteDescription = settings?.siteDescription || "The most trusted digital marketplace for verified accounts. Instant delivery, secure payments, and 24/7 automated processing.";
-  const copyrightText = settings?.copyrightText?.replace("{site_name}", siteName) || settings?.footerCopyright?.replace("{site_name}", siteName) || `© ${year} ${siteName}. All rights reserved.`;
+  const copyrightText = settings?.copyrightText?.replace("{site_name}", siteName) || settings?.footerCopyright?.replace("{site_name}", siteName) || `© ${new Date().getFullYear()} ${siteName}. All rights reserved.`;
 
   return (
     <footer className="border-t border-border-default bg-background py-16 px-4">
