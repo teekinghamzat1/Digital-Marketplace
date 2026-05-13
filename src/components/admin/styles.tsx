@@ -3,30 +3,51 @@
 export function AdminStyles() {
   return (
     <style jsx global>{`
+      :root {
+        --color-primary: #E87722;
+        --color-primary-hover: #C4621A;
+      }
+
+      /* Global resets for admin */
+      .admin-layout {
+        font-family: var(--font-sans), system-ui, sans-serif;
+      }
+
       ::-webkit-scrollbar {
         width: 6px;
         height: 6px;
       }
       ::-webkit-scrollbar-track {
-        background: rgba(255, 255, 255, 0.02);
+        background: transparent;
       }
       ::-webkit-scrollbar-thumb {
-        background: rgba(255, 255, 255, 0.1);
+        background: rgba(128, 128, 128, 0.2);
         border-radius: 10px;
       }
       ::-webkit-scrollbar-thumb:hover {
-        background: #E87722;
+        background: var(--color-primary);
       }
       
       .vault-card {
-        background: #1a1a1a;
-        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: var(--background-surface, #ffffff);
+        border: 1px solid var(--border-default, rgba(0, 0, 0, 0.08));
         border-radius: 1rem;
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
       }
+      .dark .vault-card {
+        --background-surface: #1a1a1a;
+        --border-default: rgba(255, 255, 255, 0.08);
+        box-shadow: none;
+      }
+      
       .vault-card:hover {
         border-color: rgba(232, 119, 34, 0.3);
-        box-shadow: 0 8px 32px -8px rgba(0, 0, 0, 0.5);
+        transform: translateY(-2px);
+        box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.05);
+      }
+      .dark .vault-card:hover {
+        box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.4);
       }
 
       .status-badge {
@@ -43,10 +64,23 @@ export function AdminStyles() {
         width: 4px;
       }
       .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: rgba(128, 128, 128, 0.1);
+      }
+      .dark .custom-scrollbar::-webkit-scrollbar-thumb {
         background: rgba(255, 255, 255, 0.05);
       }
-      .custom-scrollbar:hover::-webkit-scrollbar-thumb {
-        background: rgba(255, 255, 255, 0.1);
+
+      /* Responsive utility for sidebar padding */
+      .admin-main {
+        padding-top: 4rem; /* h-16 */
+        transition: padding-left 0.3s ease;
+      }
+      
+      @media (min-width: 1024px) {
+        .admin-main {
+          padding-top: 4rem;
+          padding-left: 280px;
+        }
       }
     `}</style>
   );

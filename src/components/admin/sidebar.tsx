@@ -80,7 +80,7 @@ export function AdminSidebar({ settings, adminName = "Admin" }: AdminSidebarProp
   return (
     <>
       {/* Mobile Header Bar */}
-      <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-surface border-b border-white/10 flex items-center justify-between px-4 z-[100]">
+      <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-background border-b border-border-default flex items-center justify-between px-4 z-[100]">
         <Link href="/admin" className="text-xl font-bold font-syne text-primary truncate max-w-[200px]">
           {settings?.siteName || "Admin Dashboard"}
         </Link>
@@ -102,13 +102,13 @@ export function AdminSidebar({ settings, adminName = "Admin" }: AdminSidebarProp
 
       {/* Sidebar Drawer */}
       <aside 
-        className={`fixed top-0 left-0 h-full bg-surface border-r border-white/10 z-[120] transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] lg:translate-x-0 ${
+        className={`fixed top-0 left-0 h-full bg-background border-r border-border-default z-[120] transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] lg:translate-x-0 ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         } ${isExpanded ? 'w-[280px]' : 'lg:w-[80px]'}`}
       >
         <div className="flex flex-col h-full overflow-hidden">
           {/* Logo Section */}
-          <div className="h-20 flex items-center justify-between px-6 border-b border-white/5 shrink-0">
+          <div className="h-20 flex items-center justify-between px-6 border-b border-border-default shrink-0">
             <Link href="/admin" className="flex items-center gap-3">
               <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white shrink-0">
                 <LayoutDashboard size={18} />
@@ -121,7 +121,7 @@ export function AdminSidebar({ settings, adminName = "Admin" }: AdminSidebarProp
             </Link>
             <button 
               onClick={() => setIsOpen(false)} 
-              className="lg:hidden text-text-muted hover:text-white"
+              className="lg:hidden text-text-muted hover:text-foreground"
             >
               <X size={20} />
             </button>
@@ -135,8 +135,8 @@ export function AdminSidebar({ settings, adminName = "Admin" }: AdminSidebarProp
           </nav>
 
           {/* Bottom Profile Section */}
-          <div className="p-4 mt-auto border-t border-white/5 bg-white/2">
-            <div className={`flex items-center gap-3 p-3 rounded-2xl bg-surface-raised border border-white/5 ${!isExpanded && 'lg:justify-center'}`}>
+          <div className="p-4 mt-auto border-t border-border-default bg-surface-elevated/30">
+            <div className={`flex items-center gap-3 p-3 rounded-2xl bg-background border border-border-default ${!isExpanded && 'lg:justify-center'}`}>
               <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary shrink-0">
                 <User size={20} />
               </div>
