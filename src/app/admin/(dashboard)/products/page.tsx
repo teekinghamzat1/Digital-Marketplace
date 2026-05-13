@@ -9,7 +9,14 @@ async function getProducts() {
     orderBy: { createdAt: 'desc' },
     include: {
       category: { select: { name: true } },
-      tiers: { select: { id: true } }
+      tiers: { select: { id: true } },
+      _count: {
+        select: {
+          items: {
+            where: { isSold: false }
+          }
+        }
+      }
     }
   });
 }

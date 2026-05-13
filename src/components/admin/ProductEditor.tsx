@@ -7,6 +7,7 @@ import {
   ChevronRight, Package, DollarSign, Edit3,
   ShoppingBag, ShieldAlert
 } from "lucide-react";
+import Swal from "sweetalert2";
 
 interface ProductEditorProps {
   productId?: string | null;
@@ -102,13 +103,22 @@ export function ProductEditor({ productId, onClose, onSave }: ProductEditorProps
       
       if (res.ok) {
         if (!productId) {
-           window.location.reload(); 
+           onSave();
         } else {
+           Swal.fire({
+             title: 'Saved!',
+             text: 'Product information updated.',
+             icon: 'success',
+             timer: 1500,
+             showConfirmButton: false,
+             background: 'var(--bg-default)',
+             color: 'var(--text-primary)'
+           });
            onSave();
         }
       }
     } catch (err) {
-      alert("Error saving product details");
+      Swal.fire('Error', 'Error saving product details', 'error');
     } finally {
       setSaving(false);
     }
@@ -123,9 +133,19 @@ export function ProductEditor({ productId, onClose, onSave }: ProductEditorProps
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ tiers }),
       });
-      if (res.ok) alert("Tiers updated successfully");
+      if (res.ok) {
+        Swal.fire({
+          title: 'Success!',
+          text: 'Pricing tiers updated.',
+          icon: 'success',
+          timer: 1500,
+          showConfirmButton: false,
+          background: 'var(--bg-default)',
+          color: 'var(--text-primary)'
+        });
+      }
     } catch (err) {
-      alert("Error saving tiers");
+      Swal.fire('Error', 'Error saving tiers', 'error');
     } finally {
       setSaving(false);
     }
@@ -143,18 +163,36 @@ export function ProductEditor({ productId, onClose, onSave }: ProductEditorProps
       if (res.ok) {
         setStockInput("");
         fetchInventory();
-        alert("Stock added successfully");
+        Swal.fire({
+          title: 'Imported!',
+          text: 'New stock added to inventory.',
+          icon: 'success',
+          timer: 1500,
+          showConfirmButton: false,
+          background: 'var(--bg-default)',
+          color: 'var(--text-primary)'
+        });
       }
     } catch (err) {
-      alert("Error adding stock");
+      Swal.fire('Error', 'Error adding stock', 'error');
     } finally {
       setSaving(false);
     }
   };
 
   const handleDeleteItem = async (itemId: string, isSold: boolean) => {
-    if (isSold && !confirm("This item has been sold. Deleting it will remove the record from the customer's order. Are you sure?")) return;
-    if (!isSold && !confirm("Are you sure you want to delete this unsold item?")) return;
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: isSold ? "This item has been sold. Deleting it will remove the record from the customer's order history!" : "Are you sure you want to delete this unsold item?",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#E5324B',
+      confirmButtonText: 'Yes, delete it!',
+      background: 'var(--bg-default)',
+      color: 'var(--text-primary)'
+    });
+
+    if (!result.isConfirmed) return;
 
     try {
       const res = await fetch(`/api/admin/products/${productId}/items/${itemId}`, {
@@ -162,12 +200,21 @@ export function ProductEditor({ productId, onClose, onSave }: ProductEditorProps
       });
       if (res.ok) {
         setItems(prev => prev.filter(item => item.id !== itemId));
+        Swal.fire({
+          title: 'Deleted!',
+          text: 'Item removed.',
+          icon: 'success',
+          timer: 1000,
+          showConfirmButton: false,
+          background: 'var(--bg-default)',
+          color: 'var(--text-primary)'
+        });
       } else {
         const data = await res.json();
-        alert(data.error || "Failed to delete item");
+        Swal.fire('Error', data.error || "Failed to delete item", 'error');
       }
     } catch (err) {
-      alert("Error deleting item");
+      Swal.fire('Error', 'Error deleting item', 'error');
     }
   };
 
@@ -184,12 +231,21 @@ export function ProductEditor({ productId, onClose, onSave }: ProductEditorProps
         setItems(prev => prev.map(item => item.id === itemId ? { ...item, credentialText: editValue } : item));
         setEditingItemId(null);
         setEditValue("");
+        Swal.fire({
+          title: 'Updated!',
+          text: 'Credential text updated.',
+          icon: 'success',
+          timer: 1000,
+          showConfirmButton: false,
+          background: 'var(--bg-default)',
+          color: 'var(--text-primary)'
+        });
       } else {
         const data = await res.json();
-        alert(data.error || "Failed to update item");
+        Swal.fire('Error', data.error || "Failed to update item", 'error');
       }
     } catch (err) {
-      alert("Error updating item");
+      Swal.fire('Error', 'Error updating item', 'error');
     } finally {
       setSaving(false);
     }
@@ -207,7 +263,6 @@ export function ProductEditor({ productId, onClose, onSave }: ProductEditorProps
 
   return (
     <div className="fixed inset-0 bg-background/90 backdrop-blur-md z-[200] flex justify-end transition-all animate-in fade-in overflow-hidden">
-      {/* Container with overflow-hidden to prevent body scroll when sidebar is open */}
       <div className="w-full max-w-2xl bg-background border-l border-border-default h-full flex flex-col shadow-2xl overflow-hidden animate-in slide-in-from-right-full duration-300">
         {/* Header */}
         <div className="p-6 border-b border-border-default flex items-center justify-between bg-surface-elevated/20 shrink-0">
