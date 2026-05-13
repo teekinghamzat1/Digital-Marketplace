@@ -7,14 +7,6 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { useState } from "react";
-
-import { 
-  ShoppingBag, Search, Filter, Download, 
-  ChevronRight, MoreVertical, Eye, Calendar,
-  User as UserIcon, Package as PackageIcon, ExternalLink
-} from "lucide-react";
-import { format } from "date-fns";
-import { useState } from "react";
 import { OrderDetailView } from "./OrderDetailView";
 
 interface Order {
@@ -181,6 +173,11 @@ export function OrderList({ initialOrders }: { initialOrders: Order[] }) {
         </div>
       </div>
 
+      {viewingOrderId && (
+        <OrderDetailView 
+          orderId={viewingOrderId} 
+          onClose={() => setViewingOrderId(null)} 
+        />
       )}
     </>
   );

@@ -2,16 +2,7 @@
 
 import { useState } from "react";
 import { 
-  Package, Plus, GripVertical, Trash2, Edit3, 
-  ChevronRight, LayoutGrid, List,
-  ArrowUp, ArrowDown, Settings2,
-  CheckCircle2, AlertCircle, Loader2,
-  ExternalLink, Layers, Database
-} from "lucide-react";
-import { format } from "date-fns";
-
-import { 
-  Package, Plus, GripVertical, Trash2, Edit3, 
+  Package, Plus, Trash2, Edit3, 
   ChevronRight, LayoutGrid, List,
   ArrowUp, ArrowDown, Settings2,
   CheckCircle2, AlertCircle, Loader2,

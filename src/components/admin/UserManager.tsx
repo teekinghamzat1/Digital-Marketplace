@@ -8,15 +8,6 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { useState } from "react";
-
-import { 
-  Users, Search, Filter, MoreVertical, 
-  Wallet, Calendar, User as UserIcon,
-  CheckCircle2, XCircle, ChevronRight,
-  ArrowUpRight, ArrowDownLeft, ShoppingBag
-} from "lucide-react";
-import { format } from "date-fns";
-import { useState } from "react";
 import { WalletManager } from "./WalletManager";
 
 interface User {
