@@ -1,14 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useTheme } from "next-themes";
 import { Moon, Sun, LogIn, UserPlus, Menu, X, LayoutDashboard, ShoppingBag, Wallet, Settings, LogOut, Phone, Shield, FileText, Send, User } from "lucide-react";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { SiteSettings, getLogoForMode } from "@/lib/settings-client";
+import { useTheme } from "@/context/ThemeContext";
 
 export function Navbar({ settings: propSettings }: { settings?: SiteSettings }) {
-  const { theme, resolvedTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [isOpen, setIsOpen] = useState(false);
@@ -57,7 +57,7 @@ export function Navbar({ settings: propSettings }: { settings?: SiteSettings }) 
   ];
 
   // Resolve logo using the new dual mode logic
-  const logoUrl = settings ? getLogoForMode(settings, resolvedTheme) : null;
+  const logoUrl = settings ? getLogoForMode(settings, theme) : null;
 
   return (
     <>
@@ -89,6 +89,14 @@ export function Navbar({ settings: propSettings }: { settings?: SiteSettings }) 
                 {link.name}
               </Link>
             ))}
+            
+            <button
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              className="p-2 bg-surface-elevated text-foreground rounded-xl border border-border-default hover:border-primary/50 transition-all ml-2"
+              aria-label="Toggle Theme"
+            >
+              {mounted && (theme === 'dark' ? <Sun size={18} className="text-primary" /> : <Moon size={18} className="text-primary" />)}
+            </button>
 
             <div className="flex items-center gap-3 ml-4">
               {user ? (
@@ -116,7 +124,14 @@ export function Navbar({ settings: propSettings }: { settings?: SiteSettings }) 
             </div>
           </div>
           
-          <div className="lg:hidden flex items-center gap-2">
+          <div className="lg:hidden flex items-center gap-4">
+            <button
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              className="p-2.5 bg-surface-elevated text-foreground rounded-xl border border-border-default hover:border-primary/50 transition-all"
+              aria-label="Toggle Theme"
+            >
+              {mounted && (theme === 'dark' ? <Sun size={20} className="text-primary" /> : <Moon size={20} className="text-primary" />)}
+            </button>
             <button
               onClick={() => setIsOpen(!isOpen)}
               className="p-2.5 bg-primary text-white rounded-xl shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all"

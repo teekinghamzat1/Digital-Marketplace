@@ -2,11 +2,13 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, ShoppingBag, Wallet, Settings, LogOut } from "lucide-react";
+import { LayoutDashboard, ShoppingBag, Wallet, Settings, LogOut, Moon, Sun } from "lucide-react";
+import { useTheme } from "@/context/ThemeContext";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
+  const { theme, setTheme } = useTheme();
 
   const navItems = [
     { name: "Overview", href: "/dashboard", icon: LayoutDashboard },
@@ -52,13 +54,22 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               })}
             </nav>
 
-            <button 
-              onClick={handleLogout}
-              className="flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-error hover:bg-error/10 transition-colors mt-auto"
-            >
-              <LogOut size={20} />
-              Logout
-            </button>
+            <div className="mt-auto space-y-2">
+              <button
+                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all hover:bg-surface-elevated text-text-secondary hover:text-foreground border border-transparent hover:border-border-default"
+              >
+                {theme === 'dark' ? <Sun size={20} className="text-primary" /> : <Moon size={20} className="text-primary" />}
+                {theme === 'dark' ? 'Switch to Light' : 'Switch to Dark'}
+              </button>
+              <button 
+                onClick={handleLogout}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-error hover:bg-error/10 transition-colors"
+              >
+                <LogOut size={20} />
+                Logout
+              </button>
+            </div>
           </div>
         </aside>
 
