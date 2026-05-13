@@ -30,7 +30,7 @@ export function WhatsAppButton({ settings: propSettings }: { settings?: SiteSett
       href={whatsappUrl}
       target="_blank"
       rel="noopener noreferrer"
-      className="fixed bottom-8 right-8 z-[90] group flex flex-row-reverse items-center gap-3 transition-all duration-500 hover:scale-105 active:scale-95"
+      className="fixed bottom-28 md:bottom-8 right-8 z-[90] group flex flex-row-reverse items-center gap-3 transition-all duration-500 hover:scale-105 active:scale-95"
       aria-label="Contact on WhatsApp"
     >
       <div className="relative">
