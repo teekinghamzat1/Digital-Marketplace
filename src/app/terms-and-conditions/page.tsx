@@ -18,9 +18,7 @@ export default function TermsAndConditionsPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  return (
     <div className="min-h-screen bg-background">
-      <Navbar />
 
       <main className="max-w-4xl mx-auto px-4 py-16">
         {loading ? (
@@ -52,8 +50,6 @@ export default function TermsAndConditionsPage() {
           </div>
         )}
       </main>
-
-      <Footer />
     </div>
   );
 }

@@ -83,7 +83,6 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
       
       <main className="max-w-5xl mx-auto px-4 py-12">
         <Link href="/shop" className="inline-flex items-center gap-2 text-text-secondary hover:text-primary mb-8 font-medium transition-colors">

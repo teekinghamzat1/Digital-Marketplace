@@ -93,7 +93,6 @@ export default function OrderSuccessPage({ params }: { params: Promise<{ id: str
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
       
       <main className="max-w-4xl mx-auto px-4 py-12">
         <div className="flex flex-col items-center text-center mb-12">

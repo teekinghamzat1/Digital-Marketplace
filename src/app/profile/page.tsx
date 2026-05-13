@@ -147,7 +147,6 @@ export default function ProfilePage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-background pb-24">
-        <Navbar />
         <div className="flex justify-center items-center h-[60vh]">
           <span className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></span>
         </div>
@@ -157,7 +156,6 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      <Navbar />
       
       <main className="max-w-3xl mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold font-[family-name:var(--font-syne)] text-foreground mb-8">My Profile</h1>
