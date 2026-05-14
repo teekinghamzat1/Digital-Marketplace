@@ -39,6 +39,7 @@ export function AdminSidebar({ settings, adminName = "Admin" }: AdminSidebarProp
     { name: "Users & Wallets", href: "/admin/users", icon: Users },
     { name: "Tickets & Disputes", href: "/admin/tickets", icon: MessageSquareWarning, badge: 3 },
     { label: "CONFIGURATION", type: "label" },
+    { name: "Administrators", href: "/admin/admins", icon: Users },
     { name: "Site Settings", href: "/admin/settings", icon: Settings2 },
   ];
 

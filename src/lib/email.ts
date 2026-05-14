@@ -7,9 +7,8 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function sendEmail({ to, subject, html }: { to: string, subject: string, html: string }) {
   try {
-    // Optionally fetch a custom sender from settings, or use a default one like "onboarding@resend.dev" for testing
-    // Make sure you have verified your domain on Resend.com to use a custom sender email.
-    let senderEmail = "Marketplace <onboarding@resend.dev>"; 
+    // Use EMAIL_FROM env var if present, otherwise fallback to default testing domain
+    let senderEmail = process.env.EMAIL_FROM || "Marketplace <onboarding@resend.dev>"; 
     
     try {
       const smtpFromSetting = await prisma.siteSetting.findUnique({
