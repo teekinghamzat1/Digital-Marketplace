@@ -30,7 +30,7 @@ export async function generateMetadata(): Promise<Metadata> {
     description: settings.seoDescription || settings.siteDescription || "Premium digital account marketplace",
     keywords: settings.seoKeywords || "digital marketplace, verified accounts, buy accounts",
     icons: {
-      icon: settings.favicon || "/favicon.ico",
+      icon: settings.favicon || "/icon.png",
     },
     openGraph: {
       title: settings.seoTitle || settings.siteName,

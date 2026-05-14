@@ -36,7 +36,7 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   siteLogo: "",
   logoLight: "",
   logoDark: "",
-  favicon: "/favicon.ico",
+  favicon: "/icon.png",
   primaryColor: "#E87722",
   secondaryColor: "#fb923c",
   accentColor: "#f59e0b",
