@@ -1,44 +1,48 @@
-import nodemailer from "nodemailer";
+import { Resend } from 'resend';
 import prisma from "./prisma";
+import { logger } from "./logger";
+
+// Initialize Resend with your API key
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function sendEmail({ to, subject, html }: { to: string, subject: string, html: string }) {
   try {
-    const settings = await prisma.siteSetting.findMany({
-      where: {
-        key: {
-          in: ["smtp_host", "smtp_port", "smtp_user", "smtp_pass", "smtp_from"]
-        }
+    // Optionally fetch a custom sender from settings, or use a default one like "onboarding@resend.dev" for testing
+    // Make sure you have verified your domain on Resend.com to use a custom sender email.
+    let senderEmail = "Marketplace <onboarding@resend.dev>"; 
+    
+    try {
+      const smtpFromSetting = await prisma.siteSetting.findUnique({
+        where: { key: "smtp_from" }
+      });
+      if (smtpFromSetting?.value) {
+        // e.g. "Marketplace <no-reply@yourdomain.com>"
+        senderEmail = smtpFromSetting.value;
       }
-    });
-
-    const config: Record<string, string> = {};
-    settings.forEach(s => { config[s.key] = s.value; });
-
-    if (!config.smtp_host || !config.smtp_user || !config.smtp_pass) {
-      console.warn("SMTP not configured. Email not sent.");
-      return;
+    } catch (dbErr) {
+      // Ignore DB errors if settings are not available
     }
 
-    const transporter = nodemailer.createTransport({
-      host: config.smtp_host,
-      port: parseInt(config.smtp_port) || 587,
-      secure: config.smtp_port === "465",
-      auth: {
-        user: config.smtp_user,
-        pass: config.smtp_pass,
-      },
+    if (!process.env.RESEND_API_KEY) {
+      logger.warn("RESEND_API_KEY is not set. Email not sent.");
+      return { success: false, error: "RESEND_API_KEY is not configured" };
+    }
+
+    const data = await resend.emails.send({
+      from: senderEmail,
+      to: [to],
+      subject: subject,
+      html: html,
     });
 
-    await transporter.sendMail({
-      from: `"${config.smtp_from || "Marketplace"}" <${config.smtp_user}>`,
-      to,
-      subject,
-      html,
-    });
+    if (data.error) {
+      logger.error(data.error, "Resend API Error");
+      return { success: false, error: data.error };
+    }
 
-    return { success: true };
+    return { success: true, data };
   } catch (error) {
-    console.error("Email Sending Error:", error);
+    logger.error(error, "Email Sending Error");
     return { success: false, error };
   }
 }

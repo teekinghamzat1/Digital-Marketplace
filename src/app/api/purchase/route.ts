@@ -5,6 +5,7 @@ import { PurchaseSchema } from "@/lib/validations";
 import { purchaseLimiter, checkRateLimit } from "@/lib/ratelimit";
 import { getUserWalletBalance } from "@/lib/wallet";
 import { logAction } from "@/lib/audit";
+import { sendEmail } from "@/lib/email";
 import { logger } from "@/lib/logger";
 import { sanitizeInput } from "@/lib/sanitize";
 import crypto from "crypto";
@@ -134,6 +135,24 @@ export async function POST(request: NextRequest) {
       entityId: result.orderId,
       details: { productId, price: result.price }
     });
+
+    // 6. Transactional Email (Non-blocking)
+    sendEmail({
+      to: user.email,
+      subject: "Purchase Successful",
+      html: `
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+          <h2 style="color: #10b981;">Purchase Confirmed!</h2>
+          <p>Your purchase was successful.</p>
+          <p><strong>Order ID:</strong> ${result.orderId}</p>
+          <p><strong>Total Paid:</strong> ₦${result.price.toLocaleString()}</p>
+          <p>You can view your items in your dashboard.</p>
+          <div style="margin-top: 30px; text-align: center;">
+            <a href="${process.env.NEXTAUTH_URL || request.nextUrl.origin}/dashboard/purchases" style="background: #10b981; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold;">View Purchases</a>
+          </div>
+        </div>
+      `
+    }).catch(err => logger.error(err, "Failed to send purchase email"));
 
     return NextResponse.json({
       message: "Purchase successful",

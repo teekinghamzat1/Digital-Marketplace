@@ -73,7 +73,16 @@ export async function POST(request: NextRequest) {
     sendEmail({
       to: email,
       subject: "Welcome to Sumon Mondal Marketplace!",
-      html: `<h1>Welcome, ${username}!</h1><p>Your account has been successfully created.</p>`
+      html: `
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+          <h2 style="color: #10b981;">Welcome, ${username}!</h2>
+          <p>Your account has been successfully created.</p>
+          <p>You can now browse our catalog and make purchases securely.</p>
+          <div style="margin-top: 30px; text-align: center;">
+            <a href="${process.env.NEXTAUTH_URL || request.nextUrl.origin}/shop" style="background: #10b981; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold;">Browse Shop</a>
+          </div>
+        </div>
+      `
     }).catch(err => logger.error(err, "Failed to send welcome email"));
 
     return NextResponse.json({ 
